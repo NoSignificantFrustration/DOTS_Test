@@ -39,7 +39,8 @@ public class Grid_A_Star : MonoBehaviour
         openHashset.Add(startCell);
 
 
-        
+        int lovestH = int.MaxValue;
+        int lovestHIndex = 0;
 
         int current = -1;
         List<int> path = new List<int>();
@@ -88,6 +89,11 @@ public class Grid_A_Star : MonoBehaviour
                     {
                         AddHeapItem(index);
                         openHashset.Add(index);
+                        if (grid[index].hCost < lovestH)
+                        {
+                            lovestH = grid[index].hCost;
+                            lovestHIndex = index;
+                        }
                     }
                 }
 
@@ -96,10 +102,11 @@ public class Grid_A_Star : MonoBehaviour
 
         if (current != endCell)
         {
-            return path;
+            current = lovestHIndex;
         }
+       
 
-        current = endCell;
+        
 
         while (current != startCell)
         {

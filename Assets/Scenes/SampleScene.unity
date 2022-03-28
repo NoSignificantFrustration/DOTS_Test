@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.20749113, g: 0.21147475, b: 0.14576823, a: 1}
+  m_IndirectSpecularColor: {r: 0.20749143, g: 0.21147497, b: 0.14576834, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -250,12 +250,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <connections>k__BackingField:
   - neighbour: {fileID: 1393654158}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   - neighbour: {fileID: 877933462}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
+  id: 0
   groundGroup: 3
   blocked: 0
 --- !u!4 &153180575
@@ -515,12 +516,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <connections>k__BackingField:
   - neighbour: {fileID: 153180574}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 1
   - neighbour: {fileID: 1543244188}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
+  id: 0
   groundGroup: 5
   blocked: 0
 --- !u!4 &837803193
@@ -568,9 +570,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <connections>k__BackingField:
   - neighbour: {fileID: 153180574}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
+  id: 0
   groundGroup: 4
   blocked: 0
 --- !u!4 &877933463
@@ -1099,12 +1102,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <connections>k__BackingField:
   - neighbour: {fileID: 153180574}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   - neighbour: {fileID: 1543244188}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
+  id: 0
   groundGroup: 0
   blocked: 0
 --- !u!4 &1393654159
@@ -1152,12 +1156,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <connections>k__BackingField:
   - neighbour: {fileID: 1393654158}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   - neighbour: {fileID: 837803192}
-    minHeight: 0
+    maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
+  id: 0
   groundGroup: 2
   blocked: 0
 --- !u!4 &1543244189
@@ -1371,12 +1376,12 @@ MonoBehaviour:
   - {fileID: 877933462}
   - {fileID: 837803192}
   - {fileID: 1543244188}
-  cellRadius: 1
+  cellRadius: 0.5
   walkableHeight: 2
   bottomLeft: {x: 0, y: 0}
   topRight: {x: 59, y: 53}
   showGrid: 1
-  showGraph: 0
+  showGraph: 1
   pathfinder: {fileID: 0}
   path: 
 --- !u!4 &1990685783

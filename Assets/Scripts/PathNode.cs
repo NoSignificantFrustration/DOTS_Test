@@ -8,6 +8,7 @@ public class PathNode : MonoBehaviour
     [field: SerializeField] public List<PathNodeConnection> connections { get; private set; }
 
     public PathfindingVolume pathfindingVolume;
+    public int id;
     public int groundGroup;
     public bool blocked;
 
@@ -45,7 +46,7 @@ public class PathNode : MonoBehaviour
     {
         public PathNode neighbour;
         PathNodeTransitionMethod transitionMethod;
-        public int minHeight;
+        public int maxHeight;
         public bool oneDirectional;
         
     }

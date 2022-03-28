@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -33,6 +34,9 @@ public class PathfindingVolume : MonoBehaviour
     public List<int> path;
 
     [HideInInspector, SerializeField] private List<GizmoConnectionInfo> gizmoConnectionInfos;
+    public NavNodeInfo[] navNodeInfos { get; private set; }
+    public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos { get; private set; }
+
 
     private void Awake()
     {
@@ -54,6 +58,7 @@ public class PathfindingVolume : MonoBehaviour
             CalculateNodeConnectionGizmos();
         }
         pathfinder = GetComponent<Grid_A_Star>();
+        GenerateGraph();
     }
 
     // Start is called before the first frame update
@@ -404,7 +409,37 @@ public class PathfindingVolume : MonoBehaviour
     }
 
 
+    private void GenerateGraph()
+    {
+        navNodeInfos = new NavNodeInfo[pathNodes.Count];
+        List<int> sourceList = new List<int>();
+        List<GraphConnectionInfo> connectionInfoList = new List<GraphConnectionInfo>();
 
+        for (int i = 0; i < pathNodes.Count; i++)
+        {
+            pathNodes[i].id = i;
+        }
+
+        for (int i = 0; i < pathNodes.Count; i++)
+        {
+            for (int j = 0; j < pathNodes[i].connections.Count; j++)
+            {
+                sourceList.Add(pathNodes[i].id);
+
+                GraphConnectionInfo connectionInfo = new GraphConnectionInfo();
+                connectionInfo.targetID = pathNodes[i].connections[j].neighbour.id;
+                connectionInfo.maxHeight = pathNodes[i].connections[j].maxHeight;
+
+                connectionInfoList.Add(connectionInfo);
+            }
+        }
+
+        graphConnectionInfos = new NativeMultiHashMap<int, GraphConnectionInfo>(connectionInfoList.Count, Allocator.Persistent);
+        for (int i = 0; i < connectionInfoList.Count; i++)
+        {
+            graphConnectionInfos.Add(sourceList[i], connectionInfoList[i]);
+        }
+    }
     
 
     public struct GizmoConnectionInfo
@@ -434,4 +469,18 @@ public struct GridCell
     public int parentIndex;
     
 
+}
+
+public struct NavNodeInfo
+{
+    public int id;
+    public int groundGroup;
+    public int blocked;
+    public float2 worldPos;
+}
+
+public struct GraphConnectionInfo
+{
+    public int targetID;
+    public int maxHeight;
 }
