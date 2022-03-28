@@ -9,7 +9,8 @@ public class Grid_A_Star : MonoBehaviour
 
     private int[] openHeap;
     private int currentLength;
-
+    private HashSet<int> openHashset;
+    private int[] heapIndexes;
     private void Awake()
     {
         pathfindingVolume = GetComponent<PathfindingVolume>();
@@ -18,22 +19,27 @@ public class Grid_A_Star : MonoBehaviour
 
     public List<int> FindGridPath(Vector3 startPos, Vector3 endPos)
     {
-
+        
         grid = (GridCell[])pathfindingVolume.grid.Clone();
         System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        
+        sw.Start();
+
 
         int startCell = pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(startPos));
         int endCell = pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(endPos));
 
         currentLength = 0;
         openHeap = new int[pathfindingVolume.grid.Length];
+        openHashset = new HashSet<int>();
+        heapIndexes = new int[pathfindingVolume.grid.Length];
 
         HashSet<int> closedSet = new HashSet<int>();
 
+        AddHeapItem(startCell);
+        openHashset.Add(startCell);
 
-        openHeap[0] = startCell;
-        currentLength++;
+
+        
 
         int current = -1;
         List<int> path = new List<int>();
@@ -48,7 +54,7 @@ public class Grid_A_Star : MonoBehaviour
 
             int currentCell = RemoveFirst();
 
-
+            openHashset.Remove(currentCell);
             closedSet.Add(currentCell);
 
             if (currentCell.Equals(endCell))
@@ -68,27 +74,20 @@ public class Grid_A_Star : MonoBehaviour
                 }
 
 
-                bool contains = false;
-                sw.Start();
-                for (int i = 0; i < openHeap.Length; i++)
-                {
-                    if (openHeap[i] == index)
-                    {
-                        contains = true;
-                        break;
-                    }
-                }
-                sw.Stop();
+                bool contains = openHashset.Contains(index);
+
                 int newMovementCostToNeighbour = grid[currentCell].gCost + GetDistance(grid[currentCell], grid[index]);
                 if (newMovementCostToNeighbour < grid[index].gCost || !contains)
                 {
                     grid[index].gCost = newMovementCostToNeighbour;
                     grid[index].hCost = GetDistance(grid[index], grid[endCell]);
                     grid[index].parentIndex = pathfindingVolume.GridposToArrayPos(grid[currentCell].gridPos);
+                    SortUp(heapIndexes[index]);
 
                     if (!contains)
                     {
                         AddHeapItem(index);
+                        openHashset.Add(index);
                     }
                 }
 
@@ -109,6 +108,7 @@ public class Grid_A_Star : MonoBehaviour
         }
         path.Reverse();
         //Debug.Log(path.Count);
+        sw.Stop();
         Debug.Log(sw.ElapsedMilliseconds);
         return path;
     }
@@ -116,6 +116,7 @@ public class Grid_A_Star : MonoBehaviour
     private void AddHeapItem(int gridIndex)
     {
         openHeap[currentLength] = gridIndex;
+        heapIndexes[gridIndex] = currentLength; 
         SortUp(currentLength);
         currentLength++;
     }
@@ -126,7 +127,7 @@ public class Grid_A_Star : MonoBehaviour
         currentLength--;
         openHeap[0] = openHeap[currentLength];
 
-        SortDown(openHeap[0]);
+        SortDown(0);
 
         return firstItem;
     }
@@ -161,6 +162,11 @@ public class Grid_A_Star : MonoBehaviour
                     int temp = openHeap[swapIndex];
                     openHeap[swapIndex] = openHeap[heapIndex];
                     openHeap[heapIndex] = temp;
+
+                    int heapIndexTemp = heapIndexes[openHeap[swapIndex]];
+                    heapIndexes[openHeap[swapIndex]] = heapIndexes[openHeap[heapIndex]];
+                    heapIndexes[openHeap[heapIndex]] = heapIndexTemp;
+
                     heapIndex = swapIndex;
                 }
                 else
@@ -182,11 +188,15 @@ public class Grid_A_Star : MonoBehaviour
         while (true)
         {
 
-            if (grid[openHeap[parentIndex]].fCost < grid[openHeap[heapIndex]].fCost)
+            if (grid[openHeap[parentIndex]].fCost > grid[openHeap[heapIndex]].fCost)
             {
-                int temp = openHeap[parentIndex];
+                int temp = openHeap[parentIndex];              
                 openHeap[parentIndex] = openHeap[heapIndex];
                 openHeap[heapIndex] = temp;
+
+                int heapIndexTemp = heapIndexes[openHeap[parentIndex]];
+                heapIndexes[openHeap[parentIndex]] = heapIndexes[openHeap[heapIndex]];
+                heapIndexes[openHeap[heapIndex]] = heapIndexTemp;
             }
             else
             {

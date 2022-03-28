@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.20749143, g: 0.21147497, b: 0.14576834, a: 1}
+  m_IndirectSpecularColor: {r: 0.20749113, g: 0.21147475, b: 0.14576823, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -773,7 +773,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1079018471}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.11, y: 2.39, z: 0}
+  m_LocalPosition: {x: -11.11, y: -0, z: 0}
   m_LocalScale: {x: 7.88, y: 4.73, z: 11.24}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1371,12 +1371,13 @@ MonoBehaviour:
   - {fileID: 877933462}
   - {fileID: 837803192}
   - {fileID: 1543244188}
-  cellRadius: 0.5
-  walkableHeight: 1
+  cellRadius: 1
+  walkableHeight: 2
   bottomLeft: {x: 0, y: 0}
   topRight: {x: 59, y: 53}
   showGrid: 1
   showGraph: 0
+  pathfinder: {fileID: 0}
   path: 
 --- !u!4 &1990685783
 Transform:
