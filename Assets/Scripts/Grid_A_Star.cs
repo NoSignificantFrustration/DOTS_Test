@@ -54,6 +54,7 @@ public class Grid_A_Star : MonoBehaviour
         {
 
             int currentCell = RemoveFirst();
+            
 
             openHashset.Remove(currentCell);
             closedSet.Add(currentCell);
@@ -82,8 +83,8 @@ public class Grid_A_Star : MonoBehaviour
                 {
                     grid[index].gCost = newMovementCostToNeighbour;
                     grid[index].hCost = GetDistance(grid[index], grid[endCell]);
-                    grid[index].parentIndex = pathfindingVolume.GridposToArrayPos(grid[currentCell].gridPos);
-                    SortUp(heapIndexes[index]);
+                    grid[index].parentIndex = currentCell;
+                    //SortUp(heapIndexes[index]);
 
                     if (!contains)
                     {
@@ -160,10 +161,7 @@ public class Grid_A_Star : MonoBehaviour
                         swapIndex = childIndexRight;
                     }
                 }
-                else
-                {
-                    return;
-                }
+                
 
                 if (grid[openHeap[swapIndex]].fCost < grid[openHeap[heapIndex]].fCost)
                 {
@@ -205,13 +203,15 @@ public class Grid_A_Star : MonoBehaviour
                 int heapIndexTemp = heapIndexes[openHeap[parentIndex]];
                 heapIndexes[openHeap[parentIndex]] = heapIndexes[openHeap[heapIndex]];
                 heapIndexes[openHeap[heapIndex]] = heapIndexTemp;
+
+                heapIndex = parentIndex;
             }
             else
             {
                 break;
             }
 
-            parentIndex = (parentIndex - 1) / 2;
+            parentIndex = (heapIndex - 1) / 2;
         }
     }
 

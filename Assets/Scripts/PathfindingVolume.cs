@@ -428,6 +428,22 @@ public class PathfindingVolume : MonoBehaviour
         for (int i = 0; i < pathNodes.Count; i++)
         {
             pathNodes[i].id = i;
+            NavNodeInfo nodeInfo = new NavNodeInfo();
+            nodeInfo.id = i;
+            nodeInfo.gridPos = worldToGridPos(pathNodes[i].transform.position);
+            if (pathNodes[i].blocked)
+            {
+                nodeInfo.blocked = 1;
+            }
+            else
+            {
+                nodeInfo.blocked = 0;
+            }
+            nodeInfo.groundGroup = grid[nodeInfo.gridPos.y * gridSize.x + nodeInfo.gridPos.x].gridGroup;
+            if (nodeInfo.groundGroup < 1)
+            {
+                Debug.LogWarning("NavNode " + i + " is not on walkable ground!");
+            }
         }
 
         for (int i = 0; i < pathNodes.Count; i++)
@@ -439,7 +455,6 @@ public class PathfindingVolume : MonoBehaviour
                 GraphConnectionInfo connectionInfo = new GraphConnectionInfo();
                 connectionInfo.targetID = pathNodes[i].connections[j].neighbour.id;
                 connectionInfo.maxHeight = pathNodes[i].connections[j].maxHeight;
-
                 connectionInfoList.Add(connectionInfo);
             }
         }
@@ -494,7 +509,7 @@ public struct NavNodeInfo
     public int id;
     public int groundGroup;
     public int blocked;
-    public float2 worldPos;
+    public int2 gridPos;
 }
 
 public struct GraphConnectionInfo
