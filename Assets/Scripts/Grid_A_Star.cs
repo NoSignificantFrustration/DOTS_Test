@@ -5,7 +5,7 @@ public class Grid_A_Star : MonoBehaviour
 {
 
     private PathfindingVolume pathfindingVolume;
-    private GridCell[] grid;
+    [HideInInspector] public GridCell[] grid;
 
     private int[] openHeap;
     private int currentLength;
@@ -20,7 +20,7 @@ public class Grid_A_Star : MonoBehaviour
     public List<int> FindGridPath(Vector3 startPos, Vector3 endPos)
     {
         
-        grid = (GridCell[])pathfindingVolume.grid.Clone();
+        //grid = (GridCell[])pathfindingVolume.grid.Clone();
         System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         sw.Start();
 
@@ -117,6 +117,7 @@ public class Grid_A_Star : MonoBehaviour
         //Debug.Log(path.Count);
         sw.Stop();
         Debug.Log(sw.ElapsedMilliseconds);
+        Debug.Log("Length: " + path.Count);
         return path;
     }
 

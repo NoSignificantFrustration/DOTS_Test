@@ -51,13 +51,14 @@ public class PathfindingVolume : MonoBehaviour
         }
         //topLeft = Vector2Int.one;
         //bottomRight = Vector2Int.one;
+        pathfinder = GetComponent<Grid_A_Star>();
         CreateGrid();
         if (Application.isEditor && pathNodes.Count > 0)
         {
 
             CalculateNodeConnectionGizmos();
         }
-        pathfinder = GetComponent<Grid_A_Star>();
+        
         GenerateGraph();
     }
 
@@ -146,6 +147,11 @@ public class PathfindingVolume : MonoBehaviour
         }
 
         EvaluateGroundGroups();
+        if (pathfinder == null)
+        {
+            Debug.Log("null");
+        }
+        pathfinder.grid = (GridCell[])grid.Clone();
     }
 
     void EvaluateGroundGroups()
@@ -242,7 +248,7 @@ public class PathfindingVolume : MonoBehaviour
 
     public GridCell GetCell(int2 pos)
     {
-        Debug.Log(gridSize);
+        //Debug.Log(gridSize);
         return grid[pos.y * gridSize.x + pos.x];
     }
 
@@ -413,6 +419,10 @@ public class PathfindingVolume : MonoBehaviour
     {
         navNodeInfos = new NavNodeInfo[pathNodes.Count];
         List<int> sourceList = new List<int>();
+        if (graphConnectionInfos.IsCreated)
+        {
+            graphConnectionInfos.Dispose();
+        }
         List<GraphConnectionInfo> connectionInfoList = new List<GraphConnectionInfo>();
 
         for (int i = 0; i < pathNodes.Count; i++)
@@ -440,7 +450,15 @@ public class PathfindingVolume : MonoBehaviour
             graphConnectionInfos.Add(sourceList[i], connectionInfoList[i]);
         }
     }
-    
+
+    private void OnDisable()
+    {
+        if (graphConnectionInfos.IsCreated)
+        {
+            graphConnectionInfos.Dispose();
+        }
+        
+    }
 
     public struct GizmoConnectionInfo
     {
