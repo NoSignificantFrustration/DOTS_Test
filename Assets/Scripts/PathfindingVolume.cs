@@ -40,7 +40,7 @@ public class PathfindingVolume : MonoBehaviour
     public BitArray NavNodeTraversableArray { get; private set; }
     public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos { get; private set; }
 
-
+    public List<int> graphPath;
     private void Awake()
     {
         cellDiameter = cellRadius * 2;
@@ -84,7 +84,7 @@ public class PathfindingVolume : MonoBehaviour
 
     public void CalculateGraphPath()
     {
-        path = graphPathfinder.FindGraphPath(origin.position, target.position);
+        graphPath = graphPathfinder.FindGraphPath(origin.position, target.position);
     }
 
     public void CreateGrid()
@@ -351,14 +351,30 @@ public class PathfindingVolume : MonoBehaviour
             }
         }
 
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
         if (path != null)
         {
-            
+            Gizmos.color = Color.red;
             for (int i = 1; i < path.Count; i++)
             {
-                Gizmos.color = Color.red;
                 Gizmos.DrawLine(new Vector3(positionArray[path[i - 1]].x, positionArray[path[i - 1]].y, -2f), new Vector3(positionArray[path[i]].x, positionArray[path[i]].y, -2f));
             }
+        }
+
+        if (graphPath != null && graphPath.Count > 0)
+        {
+            Gizmos.color = Color.red;
+            
+            for (int i = 1; i < graphPath.Count; i++)
+            {
+                Gizmos.DrawLine(pathNodes[graphPath[i - 1]].transform.position, pathNodes[graphPath[i]].transform.position);
+            }
+            Gizmos.DrawLine(origin.position, pathNodes[graphPath[0]].transform.position);
+            Gizmos.DrawLine(pathNodes[graphPath[graphPath.Count - 1]].transform.position, target.position);
         }
 
 
