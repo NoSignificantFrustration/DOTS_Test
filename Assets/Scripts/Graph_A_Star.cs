@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class Graph_A_Star : MonoBehaviour
@@ -23,22 +24,31 @@ public class Graph_A_Star : MonoBehaviour
     public List<int> FindGraphPath(Vector3 start, Vector3 end)
     {
         int startGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(start))].gridGroup;
+        int endGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(start))].gridGroup;
 
         int startNode = 0;
+        int endNode = 0;
 
         using (NativeMultiHashMap<int, int>.Enumerator nodes = pathfindingVolume.groundGroupMap.GetValuesForKey(startGroup))
         {
-            
-            
+            //Debug.Log("Start:" + +nodes.Current);
+            if (!nodes.MoveNext())
+            {
+                return null;
+            }
             int currentNode = nodes.Current;
             startNode = currentNode;
-            float minDist = (start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y);
-
+            float minDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
+            //Debug.Log(navNodeInfos[currentNode].id);
+            //Debug.Log("Curr: " + currentNode + " Dist: " + minDist);
             while (nodes.MoveNext())
             {
-                Debug.Log("Curr: " + currentNode);
+                
                 currentNode = nodes.Current;
-                float currentDist = (start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y);
+                
+                float currentDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
+                //Debug.Log(navNodeInfos[currentNode].gridPos);
+                //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
                 if (minDist > currentDist)
                 {
                     minDist = currentDist;

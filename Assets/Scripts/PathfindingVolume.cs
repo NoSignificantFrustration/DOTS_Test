@@ -448,7 +448,9 @@ public class PathfindingVolume : MonoBehaviour
             NavNodeTraversableArray[i] = !pathNodes[i].blocked;
 
             nodeInfo.worldPos = new float2(pathNodes[i].transform.position.x, pathNodes[i].transform.position.y);
+
             nodeInfo.groundGroup = grid[nodeInfo.gridPos.y * gridSize.x + nodeInfo.gridPos.x].gridGroup;
+            navNodeInfos[i] = nodeInfo;
             if (nodeInfo.groundGroup < 1)
             {
                 Debug.LogWarning("NavNode " + i + " is not on walkable ground!");

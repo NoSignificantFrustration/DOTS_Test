@@ -54,7 +54,8 @@ public class Grid_A_Star : MonoBehaviour
         {
 
             int currentCell = RemoveFirst();
-            
+
+
 
             openHashset.Remove(currentCell);
             closedSet.Add(currentCell);
