@@ -84,14 +84,19 @@ public class PathfindingVolumeEditor : Editor
             
         }
 
-        if (GUILayout.Button("Refresh Graph"))
+        if (GUILayout.Button("Refresh Graph Gizmos"))
         {
             volume.CalculateNodeConnectionGizmos();
         }
 
-        if (GUILayout.Button("Refresh Path"))
+        if (GUILayout.Button("Refresh Grid Path"))
         {
-            volume.CalculatePath();
+            volume.CalculateGridPath();
+        }
+
+        if (GUILayout.Button("Refresh Graph Path"))
+        {
+            volume.CalculateGraphPath();
         }
         serializedObject.ApplyModifiedProperties();
     }

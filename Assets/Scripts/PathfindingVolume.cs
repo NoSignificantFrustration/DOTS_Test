@@ -30,11 +30,14 @@ public class PathfindingVolume : MonoBehaviour
     private float2[] positionArray;
 
     [SerializeField] public GridCell[] grid { get; private set; }
-    public Grid_A_Star pathfinder;
+    public Grid_A_Star gridPathfinder;
     public List<int> path;
 
     [HideInInspector, SerializeField] private List<GizmoConnectionInfo> gizmoConnectionInfos;
     public NavNodeInfo[] navNodeInfos { get; private set; }
+    public NativeMultiHashMap<int, int> groundGroupMap { get; private set; }
+    public Graph_A_Star graphPathfinder;
+    public BitArray NavNodeTraversableArray { get; private set; }
     public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos { get; private set; }
 
 
@@ -49,9 +52,8 @@ public class PathfindingVolume : MonoBehaviour
         {
             gizmoConnectionInfos = new List<GizmoConnectionInfo>();
         }
-        //topLeft = Vector2Int.one;
-        //bottomRight = Vector2Int.one;
-        pathfinder = GetComponent<Grid_A_Star>();
+        gridPathfinder = GetComponent<Grid_A_Star>();
+        graphPathfinder = GetComponent<Graph_A_Star>();
         CreateGrid();
         if (Application.isEditor && pathNodes.Count > 0)
         {
@@ -75,9 +77,14 @@ public class PathfindingVolume : MonoBehaviour
         
     }
 
-    public void CalculatePath()
+    public void CalculateGridPath()
     {
-        path = pathfinder.FindGridPath(origin.position, target.position);
+        path = gridPathfinder.FindGridPath(origin.position, target.position);
+    }
+
+    public void CalculateGraphPath()
+    {
+        path = graphPathfinder.FindGraphPath(origin.position, target.position);
     }
 
     public void CreateGrid()
@@ -147,11 +154,11 @@ public class PathfindingVolume : MonoBehaviour
         }
 
         EvaluateGroundGroups();
-        if (pathfinder == null)
+        if (gridPathfinder == null)
         {
             Debug.Log("null");
         }
-        pathfinder.grid = (GridCell[])grid.Clone();
+        gridPathfinder.grid = (GridCell[])grid.Clone();
     }
 
     void EvaluateGroundGroups()
@@ -423,7 +430,14 @@ public class PathfindingVolume : MonoBehaviour
         {
             graphConnectionInfos.Dispose();
         }
+        if (groundGroupMap.IsCreated)
+        {
+            groundGroupMap.Dispose();
+        }
+        groundGroupMap = new NativeMultiHashMap<int, int>(pathNodes.Count, Allocator.Persistent);
         List<GraphConnectionInfo> connectionInfoList = new List<GraphConnectionInfo>();
+
+        NavNodeTraversableArray = new BitArray(pathNodes.Count);
 
         for (int i = 0; i < pathNodes.Count; i++)
         {
@@ -431,19 +445,15 @@ public class PathfindingVolume : MonoBehaviour
             NavNodeInfo nodeInfo = new NavNodeInfo();
             nodeInfo.id = i;
             nodeInfo.gridPos = worldToGridPos(pathNodes[i].transform.position);
-            if (pathNodes[i].blocked)
-            {
-                nodeInfo.blocked = 1;
-            }
-            else
-            {
-                nodeInfo.blocked = 0;
-            }
+            NavNodeTraversableArray[i] = !pathNodes[i].blocked;
+
+            nodeInfo.worldPos = new float2(pathNodes[i].transform.position.x, pathNodes[i].transform.position.y);
             nodeInfo.groundGroup = grid[nodeInfo.gridPos.y * gridSize.x + nodeInfo.gridPos.x].gridGroup;
             if (nodeInfo.groundGroup < 1)
             {
                 Debug.LogWarning("NavNode " + i + " is not on walkable ground!");
             }
+            groundGroupMap.Add(grid[GridposToArrayPos(nodeInfo.gridPos)].gridGroup, i);
         }
 
         for (int i = 0; i < pathNodes.Count; i++)
@@ -464,6 +474,8 @@ public class PathfindingVolume : MonoBehaviour
         {
             graphConnectionInfos.Add(sourceList[i], connectionInfoList[i]);
         }
+
+        graphPathfinder.navNodeInfos = (NavNodeInfo[])navNodeInfos.Clone();
     }
 
     private void OnDisable()
@@ -472,7 +484,11 @@ public class PathfindingVolume : MonoBehaviour
         {
             graphConnectionInfos.Dispose();
         }
-        
+        if (groundGroupMap.IsCreated)
+        {
+            groundGroupMap.Dispose();
+        }
+
     }
 
     public struct GizmoConnectionInfo
@@ -508,8 +524,19 @@ public struct NavNodeInfo
 {
     public int id;
     public int groundGroup;
-    public int blocked;
     public int2 gridPos;
+    public float2 worldPos;
+    public int gCost;
+    public int hCost;
+    public int fCost
+    {
+        get
+        {
+            return gCost + hCost;
+        }
+    }
+
+    public int parentIndex;
 }
 
 public struct GraphConnectionInfo
