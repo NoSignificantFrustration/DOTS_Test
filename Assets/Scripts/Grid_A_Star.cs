@@ -45,10 +45,7 @@ public class Grid_A_Star : MonoBehaviour
         int current = -1;
         List<int> path = new List<int>();
 
-        if (!pathfindingVolume.traversableArray[endCell])
-        {
-            return path;
-        }
+
 
         while (currentLength > 0)
         {
@@ -231,17 +228,7 @@ public class Grid_A_Star : MonoBehaviour
             return 14 * distX + 10 * (distY - distX);
         }
     }
-    // Start is called before the first frame update
-    void Start()
-    {
 
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 }
 
 

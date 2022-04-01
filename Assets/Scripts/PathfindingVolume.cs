@@ -37,7 +37,7 @@ public class PathfindingVolume : MonoBehaviour
     public NavNodeInfo[] navNodeInfos { get; private set; }
     public NativeMultiHashMap<int, int> groundGroupMap { get; private set; }
     public Graph_A_Star graphPathfinder;
-    public BitArray NavNodeTraversableArray { get; private set; }
+    public BitArray navNodeTraversableArray { get; private set; }
     public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos { get; private set; }
 
     public List<int> graphPath;
@@ -453,7 +453,7 @@ public class PathfindingVolume : MonoBehaviour
         groundGroupMap = new NativeMultiHashMap<int, int>(pathNodes.Count, Allocator.Persistent);
         List<GraphConnectionInfo> connectionInfoList = new List<GraphConnectionInfo>();
 
-        NavNodeTraversableArray = new BitArray(pathNodes.Count);
+        navNodeTraversableArray = new BitArray(pathNodes.Count);
 
         for (int i = 0; i < pathNodes.Count; i++)
         {
@@ -461,7 +461,7 @@ public class PathfindingVolume : MonoBehaviour
             NavNodeInfo nodeInfo = new NavNodeInfo();
             nodeInfo.id = i;
             nodeInfo.gridPos = worldToGridPos(pathNodes[i].transform.position);
-            NavNodeTraversableArray[i] = !pathNodes[i].blocked;
+            navNodeTraversableArray[i] = !pathNodes[i].blocked;
 
             nodeInfo.worldPos = new float2(pathNodes[i].transform.position.x, pathNodes[i].transform.position.y);
 
