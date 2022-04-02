@@ -161,7 +161,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 7
   blocked: 0
 --- !u!4 &49098430
 Transform:
@@ -311,7 +311,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 3
+  groundGroup: 8
   blocked: 0
 --- !u!4 &153180575
 Transform:
@@ -365,7 +365,7 @@ MonoBehaviour:
     oneDirectional: 1
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 10
   blocked: 0
 --- !u!4 &400588333
 Transform:
@@ -631,7 +631,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 9
   blocked: 0
 --- !u!4 &648612872
 Transform:
@@ -685,7 +685,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 1
   blocked: 0
 --- !u!4 &690466998
 Transform:
@@ -739,7 +739,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 5
+  groundGroup: 13
   blocked: 0
 --- !u!4 &837803193
 Transform:
@@ -793,7 +793,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 2
   blocked: 0
 --- !u!4 &851933020
 Transform:
@@ -847,7 +847,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 11
   blocked: 0
 --- !u!4 &877933463
 Transform:
@@ -901,7 +901,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 12
   blocked: 0
 --- !u!4 &906046262
 Transform:
@@ -1628,7 +1628,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 0
+  groundGroup: 5
   blocked: 0
 --- !u!4 &1393654159
 Transform:
@@ -1682,7 +1682,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 3
   blocked: 0
 --- !u!4 &1476747942
 Transform:
@@ -1739,7 +1739,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 2
+  groundGroup: 5
   blocked: 0
 --- !u!4 &1543244189
 Transform:
@@ -2082,7 +2082,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 5
   blocked: 0
 --- !u!4 &1773612184
 Transform:
@@ -2314,8 +2314,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1882091409}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -51.2, y: -8, z: 0}
-  m_LocalScale: {x: 7.88, y: 5, z: 11.24}
+  m_LocalPosition: {x: -50.8981, y: -6.8933, z: 0}
+  m_LocalScale: {x: 9.683732, y: 5.3865, z: 11.24}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 20
@@ -2362,6 +2362,7 @@ GameObject:
   - component: {fileID: 1990685782}
   - component: {fileID: 1990685784}
   - component: {fileID: 1990685785}
+  - component: {fileID: 1990685786}
   m_Layer: 0
   m_Name: A*
   m_TagString: Untagged
@@ -2404,7 +2405,7 @@ MonoBehaviour:
   cellRadius: 1
   walkableHeight: 1
   bottomLeft: {x: 0, y: 0}
-  topRight: {x: 30, y: 30}
+  topRight: {x: 88, y: 81}
   showGrid: 1
   showGraph: 1
   gridPathfinder: {fileID: 0}
@@ -2447,6 +2448,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f0c507dc0e04aa24e90856d22f974ab6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1990685786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1990685781}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a71d8bc0eae46e4bb762b9d3a23128b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1999212742
@@ -2538,7 +2551,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 4
+  groundGroup: 1
   blocked: 0
 --- !u!4 &2015668164
 Transform:

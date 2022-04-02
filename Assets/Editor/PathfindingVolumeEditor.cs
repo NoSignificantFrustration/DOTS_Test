@@ -79,8 +79,16 @@ public class PathfindingVolumeEditor : Editor
 
         if (GUILayout.Button("Refresh Grid"))
         {
+            if (Application.isPlaying)
+            {
+                volume.RefreshGridWalkableArray(volume.bottomLeft, volume.topRight);
+            }
+            else
+            {
+                volume.CreateGrid();
+                
+            }
             
-            volume.CreateGrid();
             
         }
 

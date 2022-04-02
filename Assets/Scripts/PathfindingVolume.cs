@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PathfindingVolume : MonoBehaviour
 {
@@ -14,9 +16,9 @@ public class PathfindingVolume : MonoBehaviour
     [SerializeField] private float cellRadius;
     [SerializeField] private int walkableHeight;
     [Min(0)]
-    [SerializeField] private Vector2Int bottomLeft;
+    [SerializeField] public Vector2Int bottomLeft;
     [Min(0)]
-    [SerializeField] private Vector2Int topRight;
+    [SerializeField] public Vector2Int topRight;
     [SerializeField] private bool showGrid;
     [SerializeField] public bool showGraph;
 
@@ -25,7 +27,7 @@ public class PathfindingVolume : MonoBehaviour
 
     private LayerMask groundMask;
 
-    public BitArray traversableArray { get; private set; }
+     public BitArray gridTraversableArray { get; private set; }
     public BitArray walkableArray { get; private set; }
     private float2[] positionArray;
 
@@ -41,8 +43,16 @@ public class PathfindingVolume : MonoBehaviour
     public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos { get; private set; }
 
     public List<int> graphPath;
+
+    public RefreshRangeEvent refreshGridTraversableArrayEvent { get; private set; }
+
+    public PathfindingScheduler scheduler { get; private set; }
+
+
     private void Awake()
     {
+
+        
         cellDiameter = cellRadius * 2;
         int x = Mathf.RoundToInt(areaSize.x / cellDiameter);
         int y = Mathf.RoundToInt(areaSize.y / cellDiameter);
@@ -62,6 +72,9 @@ public class PathfindingVolume : MonoBehaviour
         }
         
         GenerateGraph();
+
+        refreshGridTraversableArrayEvent = new RefreshRangeEvent();
+        scheduler = GetComponent<PathfindingScheduler>();
     }
 
     // Start is called before the first frame update
@@ -79,7 +92,15 @@ public class PathfindingVolume : MonoBehaviour
 
     public void CalculateGridPath()
     {
-        path = gridPathfinder.FindGridPath(origin.position, target.position);
+        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+
+        //path = gridPathfinder.FindGridPath(origin.position, target.position);
+
+        path = scheduler.GetGridPath(worldToGridPos(origin.position), worldToGridPos(target.position));
+
+        sw.Stop();
+        Debug.Log(sw.ElapsedMilliseconds + "ms Length: " + path.Count);
     }
 
     public void CalculateGraphPath()
@@ -93,10 +114,10 @@ public class PathfindingVolume : MonoBehaviour
         int sizeX = Mathf.RoundToInt(areaSize.x / cellDiameter);
         int sizeY = Mathf.RoundToInt(areaSize.y / cellDiameter);
         gridSize = new Vector2Int(sizeX, sizeY);
-        traversableArray = new BitArray(gridSize.x * gridSize.y);
         walkableArray = new BitArray(gridSize.x * gridSize.y);
         positionArray = new float2[gridSize.x * gridSize.y];
         grid = new GridCell[gridSize.x * gridSize.y];
+        gridTraversableArray = new BitArray(grid.Length);
         groundMask = LayerMask.GetMask("Ground");
 
         Vector3 worldBottomLeft = transform.position - Vector3.right * areaSize.x / 2 - Vector3.up * areaSize.y / 2;
@@ -112,18 +133,18 @@ public class PathfindingVolume : MonoBehaviour
 
                 Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * cellDiameter + cellRadius) + Vector3.up * (y * cellDiameter + cellRadius);
                 //Debug.Log(worldPoint);
-                traversableArray[arrayPos] = !Physics.CheckSphere(worldPoint, cellRadius, groundMask);
+                gridTraversableArray.Set(arrayPos, !Physics.CheckSphere(worldPoint, cellRadius, groundMask));
                 positionArray[arrayPos] = new float2(worldPoint.x, worldPoint.y);
                 bool walkable = false;
                 if (y > walkableHeight - 1)
                 {
-                    if (!traversableArray[(y - walkableHeight) * gridSize.x + x])
+                    if (!gridTraversableArray[(y - walkableHeight) * gridSize.x + x])
                     {
 
                         walkable = true;
                         for (int i = 0; i < walkableHeight; i++)
                         {
-                            if (!traversableArray[(y - i) * gridSize.x + x])
+                            if (!gridTraversableArray[(y - i) * gridSize.x + x])
                             {
                                 walkable = false;
                                 break;
@@ -154,11 +175,46 @@ public class PathfindingVolume : MonoBehaviour
         }
 
         EvaluateGroundGroups();
-        if (gridPathfinder == null)
+        if (gridPathfinder != null)
         {
-            Debug.Log("null");
+            gridPathfinder.grid = (GridCell[])grid.Clone();
         }
-        gridPathfinder.grid = (GridCell[])grid.Clone();
+        
+    }
+
+    public void RefreshGridWalkableArray(Vector2Int bottomLeftStart, Vector2Int topRightEnd)
+    {
+        if (bottomLeftStart.x < 0)
+        {
+            bottomLeftStart.x = 0;
+        }
+
+        if (bottomLeftStart.y < 0)
+        {
+            bottomLeftStart.y = 0;
+        }
+
+        if (topRightEnd.x > gridSize.x)
+        {
+            topRightEnd.x = gridSize.x;
+        }
+
+        if (topRightEnd.y > gridSize.y)
+        {
+            topRightEnd.y = gridSize.y;
+        }
+
+        for (int y = bottomLeftStart.y; y < topRightEnd.x; y++)
+        {
+            for (int x = bottomLeftStart.x; x < topRightEnd.y; x++)
+            {
+                int arrayPos = y * gridSize.x + x;
+                Vector3 worldPoint = new Vector3(positionArray[arrayPos].x, positionArray[arrayPos].y, transform.position.z);
+                gridTraversableArray.Set(arrayPos, !Physics.CheckSphere(worldPoint, cellDiameter/2, groundMask));
+            }
+        }
+
+        refreshGridTraversableArrayEvent.Invoke(bottomLeftStart, topRightEnd);
     }
 
     void EvaluateGroundGroups()
@@ -174,7 +230,7 @@ public class PathfindingVolume : MonoBehaviour
             {
                 int arrayPos = y * gridSize.x + x;
 
-                if (!traversableArray[arrayPos] || exploredSet[arrayPos])
+                if (!gridTraversableArray[arrayPos] || exploredSet[arrayPos])
                 {
                     exploredSet[arrayPos] = true;
                     continue;
@@ -200,7 +256,7 @@ public class PathfindingVolume : MonoBehaviour
 
                         for (int i = 0; i < neighbourIndexList.Count; i++)
                         {
-                            if (!traversableArray[neighbourIndexList[i]] || exploredSet[neighbourIndexList[i]])
+                            if (!gridTraversableArray[neighbourIndexList[i]] || exploredSet[neighbourIndexList[i]])
                             {
                                 exploredSet[neighbourIndexList[i]] = true;
                                 continue;
@@ -311,7 +367,7 @@ public class PathfindingVolume : MonoBehaviour
                 for (int x = bottomLeft.x; x < topRight.x; x++)
                 {
                     int arrayPos = y * gridSize.x + x;
-                    Gizmos.color = traversableArray[arrayPos] ? Color.yellow : Color.red;
+                    Gizmos.color = gridTraversableArray[arrayPos] ? Color.yellow : Color.red;
 
    
                     if ((x == originPos.x && y == originPos.y) || (grid[arrayPos].gridGroup == selectedGroup && walkableArray[arrayPos]))
@@ -506,7 +562,6 @@ public class PathfindingVolume : MonoBehaviour
         {
             groundGroupMap.Dispose();
         }
-
     }
 
     public struct GizmoConnectionInfo

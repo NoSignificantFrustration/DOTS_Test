@@ -67,7 +67,7 @@ public class Grid_A_Star : MonoBehaviour
             {
 
                 //Debug.Log(index);
-                if (!pathfindingVolume.traversableArray[index] || closedSet.Contains(index))
+                if (!pathfindingVolume.gridTraversableArray[index] || closedSet.Contains(index))
                 {
 
                     continue;
@@ -112,6 +112,7 @@ public class Grid_A_Star : MonoBehaviour
             path.Add(current);
             current = grid[current].parentIndex;
         }
+        path.Add(startCell);
         path.Reverse();
         //Debug.Log(path.Count);
         sw.Stop();
