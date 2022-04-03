@@ -159,6 +159,9 @@ MonoBehaviour:
   - neighbour: {fileID: 648612871}
     maxHeight: 0
     oneDirectional: 0
+  - neighbour: {fileID: 995497088}
+    maxHeight: 0
+    oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
   groundGroup: 7
@@ -307,6 +310,9 @@ MonoBehaviour:
     maxHeight: 0
     oneDirectional: 0
   - neighbour: {fileID: 877933462}
+    maxHeight: 0
+    oneDirectional: 0
+  - neighbour: {fileID: 876579852}
     maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
@@ -629,6 +635,9 @@ MonoBehaviour:
   - neighbour: {fileID: 1773612183}
     maxHeight: 0
     oneDirectional: 0
+  - neighbour: {fileID: 995497088}
+    maxHeight: 0
+    oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
   groundGroup: 9
@@ -686,7 +695,7 @@ MonoBehaviour:
   pathfindingVolume: {fileID: 1990685782}
   id: 0
   groundGroup: 1
-  blocked: 0
+  blocked: 1
 --- !u!4 &690466998
 Transform:
   m_ObjectHideFlags: 0
@@ -808,6 +817,60 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 32
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &876579851
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 876579853}
+  - component: {fileID: 876579852}
+  m_Layer: 0
+  m_Name: NavNode (15)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &876579852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876579851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 884aef3818f96ae4a9b1bd0776a8f56d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <connections>k__BackingField:
+  - neighbour: {fileID: 153180574}
+    maxHeight: 0
+    oneDirectional: 0
+  - neighbour: {fileID: 1393654158}
+    maxHeight: 0
+    oneDirectional: 0
+  pathfindingVolume: {fileID: 1990685782}
+  id: 0
+  groundGroup: 5
+  blocked: 0
+--- !u!4 &876579853
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876579851}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -26.96, y: -3.05, z: -2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 36
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &877933461
 GameObject:
@@ -1012,6 +1075,60 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 17
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &995497087
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 995497089}
+  - component: {fileID: 995497088}
+  m_Layer: 0
+  m_Name: NavNode (16)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &995497088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995497087}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 884aef3818f96ae4a9b1bd0776a8f56d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <connections>k__BackingField:
+  - neighbour: {fileID: 648612871}
+    maxHeight: 0
+    oneDirectional: 0
+  - neighbour: {fileID: 49098429}
+    maxHeight: 0
+    oneDirectional: 0
+  pathfindingVolume: {fileID: 1990685782}
+  id: 0
+  groundGroup: 9
+  blocked: 0
+--- !u!4 &995497089
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995497087}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 20.7, y: -2.8, z: -2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 37
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1079018471
 GameObject:
@@ -1584,7 +1701,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1380902663}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.64, y: -4.63, z: 0}
+  m_LocalPosition: {x: -4.64, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1624,6 +1741,9 @@ MonoBehaviour:
     maxHeight: 0
     oneDirectional: 0
   - neighbour: {fileID: 1543244188}
+    maxHeight: 0
+    oneDirectional: 0
+  - neighbour: {fileID: 876579852}
     maxHeight: 0
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
@@ -2218,7 +2338,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1827699358}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.53, y: -3.57, z: -2}
+  m_LocalPosition: {x: 4.1, y: 2.3, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2344,7 +2464,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1959240238}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -22.34, y: 14.23, z: -2}
+  m_LocalPosition: {x: -28.2, y: -20.5, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2402,11 +2522,13 @@ MonoBehaviour:
   - {fileID: 49098429}
   - {fileID: 648612871}
   - {fileID: 1773612183}
+  - {fileID: 876579852}
+  - {fileID: 995497088}
   cellRadius: 1
   walkableHeight: 1
   bottomLeft: {x: 0, y: 0}
   topRight: {x: 88, y: 81}
-  showGrid: 1
+  showGrid: 0
   showGraph: 1
   gridPathfinder: {fileID: 0}
   path: 

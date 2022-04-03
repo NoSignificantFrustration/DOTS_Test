@@ -36,6 +36,7 @@ public class Graph_A_Star : MonoBehaviour
 
         int startNode = 0;
         int endNode = 0;
+        int closestNode = 0;
 
         using (NativeMultiHashMap<int, int>.Enumerator nodes = pathfindingVolume.groundGroupMap.GetValuesForKey(startGroup))
         {
@@ -44,27 +45,46 @@ public class Graph_A_Star : MonoBehaviour
             {
                 return null;
             }
+            bool found = false;
+
             int currentNode = nodes.Current;
             startNode = currentNode;
             float minDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
+
+            if (pathfindingVolume.navNodeTraversableArray[currentNode])
+            {
+                found = true;
+            }
             //Debug.Log(navNodeInfos[currentNode].id);
             //Debug.Log("Curr: " + currentNode + " Dist: " + minDist);
             while (nodes.MoveNext())
             {
-
                 currentNode = nodes.Current;
+
+                if (!pathfindingVolume.navNodeTraversableArray[currentNode])
+                {
+                    continue;
+                }
+
+                
 
                 float currentDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
                 //Debug.Log(navNodeInfos[currentNode].gridPos);
                 //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
-                if (minDist > currentDist)
+                if (minDist > currentDist || !found)
                 {
                     minDist = currentDist;
                     startNode = currentNode;
+                    found = true;
                 }
+
+                
             }
 
-
+            if (!found)
+            {
+                return null;
+            }
 
         }
 
@@ -79,9 +99,23 @@ public class Graph_A_Star : MonoBehaviour
             {
                 return null;
             }
+
+            bool found = false;
+
             int currentNode = nodes.Current;
             endNode = currentNode;
-            float minDist = Mathf.Abs((end.x - navNodeInfos[currentNode].worldPos.x) + (end.y - navNodeInfos[currentNode].worldPos.y));
+            float minValidDist = Mathf.Abs((end.x - navNodeInfos[currentNode].worldPos.x) + (end.y - navNodeInfos[currentNode].worldPos.y));
+
+            closestNode = nodes.Current;
+            float minDist = minValidDist;
+
+            //Debug.Log("First: " + endNode + " " + pathfindingVolume.navNodeTraversableArray[currentNode]);
+
+            if (pathfindingVolume.navNodeTraversableArray[currentNode])
+            {
+                found = true;
+            }
+
             //Debug.Log(navNodeInfos[currentNode].id);
             //Debug.Log("Curr: " + currentNode + " Dist: " + minDist);
             while (nodes.MoveNext())
@@ -90,20 +124,47 @@ public class Graph_A_Star : MonoBehaviour
                 currentNode = nodes.Current;
 
                 float currentDist = Mathf.Abs((end.x - navNodeInfos[currentNode].worldPos.x) + (end.y - navNodeInfos[currentNode].worldPos.y));
+
+                minDist = currentDist;
+                closestNode = currentNode;
+
+                if (!pathfindingVolume.navNodeTraversableArray[currentNode])
+                {
+                    if (minDist > currentDist)
+                    {
+                        
+                    }
+
+                    continue;
+                }
+
+                //Debug.Log("Current: " + currentNode + " Found: " + found);
+
+                
                 //Debug.Log(navNodeInfos[currentNode].gridPos);
                 //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
-                if (minDist > currentDist)
+                if (minValidDist > currentDist || !found)
                 {
-                    minDist = currentDist;
+                    minValidDist = currentDist;
                     endNode = currentNode;
+                    found = true;
+
+                    minDist = currentDist;
+                    closestNode = currentNode;
                 }
             }
 
+            if (!found)
+            {
+                endNode = closestNode;
+            }
         }
 
         //sw.Stop();
         //Debug.Log("Determine end node: " + sw.ElapsedMilliseconds + "ms");
         //sw.Restart();
+
+        
 
         currentLength = 0;
         openHeap = new int[pathfindingVolume.navNodeInfos.Length];
@@ -147,6 +208,7 @@ public class Graph_A_Star : MonoBehaviour
                 {
                     if (!pathfindingVolume.navNodeTraversableArray[connections.Current.targetID] || closedSet.Contains(connections.Current.targetID))
                     {
+                        
                         continue;
                     }
 
@@ -156,7 +218,7 @@ public class Graph_A_Star : MonoBehaviour
                     if (newMovementCostToNeighbour < navNodeInfos[connections.Current.targetID].gCost || !contains)
                     {
                         navNodeInfos[connections.Current.targetID].gCost = newMovementCostToNeighbour;
-                        navNodeInfos[connections.Current.targetID].hCost = GetDistance(navNodeInfos[connections.Current.targetID].gridPos, navNodeInfos[endNode].gridPos);
+                        navNodeInfos[connections.Current.targetID].hCost = GetDistance(navNodeInfos[connections.Current.targetID].gridPos, navNodeInfos[closestNode].gridPos);
                         navNodeInfos[connections.Current.targetID].parentIndex = currentNode;
 
                         if (!contains)
@@ -177,10 +239,16 @@ public class Graph_A_Star : MonoBehaviour
 
         }
 
-        //Debug.Log("Start: " + pathfindingVolume.navNodeInfos[startNode].id + " End: " + pathfindingVolume.navNodeInfos[endNode].id);
+
+        //Debug.Log("Start: " + startNode + " End: " + endNode);
+
 
         if (current != endNode)
         {
+            if (navNodeInfos[lovestHIndex].hCost >= GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[endNode].gridPos))
+            {
+                lovestHIndex = startNode;
+            }
             current = lovestHIndex;
             //Debug.Log("Fail");
         }
@@ -192,8 +260,47 @@ public class Graph_A_Star : MonoBehaviour
             //Debug.Log("Current: " + current );
             current = navNodeInfos[current].parentIndex;
         }
+        
 
-        path.Add(startNode);
+        if (path.Count > 0)
+        {
+            if (navNodeInfos[startNode].groundGroup == navNodeInfos[path[path.Count - 1]].groundGroup)
+            {
+                int startNodeToLast = GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[path[path.Count - 1]].gridPos);
+                int startNodeToStartPos = GetDistance(navNodeInfos[path[path.Count - 1]].gridPos, pathfindingVolume.worldToGridPos(start));
+                //Debug.Log("startNodeToLast: " + startNodeToLast + " startNodeToStartPos: " + startNodeToStartPos);
+                if (startNodeToLast < startNodeToStartPos)
+                {
+                    path.Add(startNode);
+                }
+            }
+            else
+            {
+                path.Add(startNode);
+            }
+        }
+        else
+        {
+            path.Add(startNode);
+        }
+
+        if (path.Count > 1 && startNode != endNode)
+        {
+            if (navNodeInfos[endNode].groundGroup == navNodeInfos[path[1]].groundGroup)
+            {
+                int endNodeToBeforeLast = GetDistance(navNodeInfos[endNode].gridPos, navNodeInfos[path[1]].gridPos);
+                int endNodeToendPos = GetDistance(navNodeInfos[path[1]].gridPos, pathfindingVolume.worldToGridPos(end));
+
+                if (endNodeToBeforeLast > endNodeToendPos)
+                {
+                    path.RemoveAt(0);
+                }
+            }
+            
+        }
+
+        Debug.Log("Closest node: " + closestNode);
+        
 
 
         sw.Stop();
@@ -201,6 +308,7 @@ public class Graph_A_Star : MonoBehaviour
         Debug.Log("Length: " + path.Count);
 
         path.Reverse();
+
         return path;
     }
 

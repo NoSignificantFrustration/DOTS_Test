@@ -23,7 +23,15 @@ public class PathNode : MonoBehaviour
         {
             if (pathfindingVolume.showGraph)
             {
-                Gizmos.color = Color.blue;
+                if (blocked)
+                {
+                    Gizmos.color = Color.red;
+                }
+                else
+                {
+                    Gizmos.color = Color.blue;
+                }
+                
                 Gizmos.DrawSphere(transform.position, 0.5f);
             }
         }
