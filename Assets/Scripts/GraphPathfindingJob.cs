@@ -1,34 +1,45 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class Graph_A_Star : MonoBehaviour
+[BurstCompile]
+public struct GraphPathfindingJob : IJob
 {
-    private PathfindingVolume pathfindingVolume;
-    [HideInInspector] public NavNodeInfo[] navNodeInfos;
 
-    private int[] openHeap;
-    private int currentLength;
-    private HashSet<int> openHashset;
-    private int[] heapIndexes;
+    [ReadOnly]
+    public NativeArray<NavNodeInfo> navNodeInfos;
+    [ReadOnly]
+    public int2 gridSize;
+    [ReadOnly]
+    public NativeBitArray navNodeTraversableArray;
+    [ReadOnly]
+    NativeMultiHashMap<int, int> groundGroupMap;
+    [ReadOnly]
+    public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos;
+    [ReadOnly]
+    public int2 startPos;
+    [ReadOnly]
+    public int2 endPos;
+    [ReadOnly]
+    public int startGroup;
+    [ReadOnly]
+    public int endGroup;
 
 
+    public NativeArray<NavNodeInfo> workingNavNodeInfos;
+    public NativeArray<int> openHeap;
+    public int currentLength;
+    public NativeHashSet<int> openHashset;
+    public NativeHashSet<int> closedSet;
+    public NativeArray<int> heapIndexes;
 
-    private void Awake()
+    public NativeList<int> path;
+    public void Execute()
     {
-        pathfindingVolume = GetComponent<PathfindingVolume>();
-    }
 
-    public List<int> FindGraphPath(Vector3 start, Vector3 end)
-    {
-
-        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        sw.Start();
-
-        int startGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(start))].gridGroup;
-        int endGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(pathfindingVolume.worldToGridPos(end))].gridGroup;
+        
 
         //sw.Stop();
         //Debug.Log("Determine start and end ground groups: " + sw.ElapsedMilliseconds + "ms");
@@ -38,12 +49,12 @@ public class Graph_A_Star : MonoBehaviour
         int endNode = 0;
         int closestNode = 0;
 
-        using (NativeMultiHashMap<int, int>.Enumerator nodes = pathfindingVolume.groundGroupMap.GetValuesForKey(startGroup))
+        using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(startGroup))
         {
             //Debug.Log("Start:" + +nodes.Current);
             if (!nodes.MoveNext())
             {
-                return null;
+                return;
             }
             bool found = false;
 
@@ -51,7 +62,7 @@ public class Graph_A_Star : MonoBehaviour
             startNode = currentNode;
             float minDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
 
-            if (pathfindingVolume.navNodeTraversableArray[currentNode])
+            if (navNodeTraversableArray.IsSet(currentNode))
             {
                 found = true;
             }
@@ -61,12 +72,12 @@ public class Graph_A_Star : MonoBehaviour
             {
                 currentNode = nodes.Current;
 
-                if (!pathfindingVolume.navNodeTraversableArray[currentNode])
+                if (!navNodeTraversableArray.IsSet(currentNode))
                 {
                     continue;
                 }
 
-                
+
 
                 float currentDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
                 //Debug.Log(navNodeInfos[currentNode].gridPos);
@@ -78,12 +89,12 @@ public class Graph_A_Star : MonoBehaviour
                     found = true;
                 }
 
-                
+
             }
 
             if (!found)
             {
-                return null;
+                return;
             }
 
         }
@@ -92,12 +103,12 @@ public class Graph_A_Star : MonoBehaviour
         //Debug.Log("Determine start node: " + sw.ElapsedMilliseconds + "ms");
         //sw.Restart();
 
-        using (NativeMultiHashMap<int, int>.Enumerator nodes = pathfindingVolume.groundGroupMap.GetValuesForKey(endGroup))
+        using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(endGroup))
         {
             //Debug.Log("Start:" + +nodes.Current);
             if (!nodes.MoveNext())
             {
-                return null;
+                return;
             }
 
             bool found = false;
@@ -111,7 +122,7 @@ public class Graph_A_Star : MonoBehaviour
 
             //Debug.Log("First: " + endNode + " " + pathfindingVolume.navNodeTraversableArray[currentNode]);
 
-            if (pathfindingVolume.navNodeTraversableArray[currentNode])
+            if (navNodeTraversableArray.IsSet(currentNode))
             {
                 found = true;
             }
@@ -132,14 +143,14 @@ public class Graph_A_Star : MonoBehaviour
                 }
 
 
-                if (!pathfindingVolume.navNodeTraversableArray[currentNode])
+                if (!navNodeTraversableArray.IsSet(currentNode))
                 {
                     continue;
                 }
 
                 //Debug.Log("Current: " + currentNode + " Found: " + found);
 
-                
+
                 //Debug.Log(navNodeInfos[currentNode].gridPos);
                 //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
                 if (minValidDist > currentDist || !found)
@@ -163,14 +174,10 @@ public class Graph_A_Star : MonoBehaviour
         //Debug.Log("Determine end node: " + sw.ElapsedMilliseconds + "ms");
         //sw.Restart();
 
-        
+
 
         currentLength = 0;
-        openHeap = new int[pathfindingVolume.navNodeInfos.Length];
-        openHashset = new HashSet<int>();
-        heapIndexes = new int[pathfindingVolume.navNodeInfos.Length];
 
-        HashSet<int> closedSet = new HashSet<int>();
 
         AddHeapItem(startNode);
         openHashset.Add(startNode);
@@ -180,7 +187,7 @@ public class Graph_A_Star : MonoBehaviour
         int lovestHIndex = 0;
 
         int current = -1;
-        List<int> path = new List<int>();
+
 
 
         while (currentLength > 0)
@@ -200,14 +207,14 @@ public class Graph_A_Star : MonoBehaviour
                 break;
             }
 
-            using (NativeMultiHashMap<int, GraphConnectionInfo>.Enumerator connections = pathfindingVolume.graphConnectionInfos.GetValuesForKey(currentNode))
+            using (NativeMultiHashMap<int, GraphConnectionInfo>.Enumerator connections = graphConnectionInfos.GetValuesForKey(currentNode))
             {
 
                 while (connections.MoveNext())
                 {
-                    if (!pathfindingVolume.navNodeTraversableArray[connections.Current.targetID] || closedSet.Contains(connections.Current.targetID))
+                    if (!navNodeTraversableArray.IsSet(connections.Current.targetID) || closedSet.Contains(connections.Current.targetID))
                     {
-                        
+
                         continue;
                     }
 
@@ -216,9 +223,11 @@ public class Graph_A_Star : MonoBehaviour
                     int newMovementCostToNeighbour = navNodeInfos[currentNode].gCost + GetDistance(navNodeInfos[currentNode].gridPos, navNodeInfos[connections.Current.targetID].gridPos);
                     if (newMovementCostToNeighbour < navNodeInfos[connections.Current.targetID].gCost || !contains)
                     {
-                        navNodeInfos[connections.Current.targetID].gCost = newMovementCostToNeighbour;
-                        navNodeInfos[connections.Current.targetID].hCost = GetDistance(navNodeInfos[connections.Current.targetID].gridPos, navNodeInfos[closestNode].gridPos);
-                        navNodeInfos[connections.Current.targetID].parentIndex = currentNode;
+                        NavNodeInfo info = workingNavNodeInfos[connections.Current.targetID];
+                        info.gCost = newMovementCostToNeighbour;
+                        info.hCost = GetDistance(navNodeInfos[connections.Current.targetID].gridPos, navNodeInfos[closestNode].gridPos);
+                        info.parentIndex = currentNode;
+                        workingNavNodeInfos[connections.Current.targetID] = info;
 
                         if (!contains)
                         {
@@ -251,7 +260,7 @@ public class Graph_A_Star : MonoBehaviour
             current = lovestHIndex;
             //Debug.Log("Fail");
         }
-       
+
 
         while (current != startNode)
         {
@@ -259,14 +268,14 @@ public class Graph_A_Star : MonoBehaviour
             //Debug.Log("Current: " + current );
             current = navNodeInfos[current].parentIndex;
         }
-        
 
-        if (path.Count > 0)
+
+        if (path.Length > 0)
         {
-            if (navNodeInfos[startNode].groundGroup == navNodeInfos[path[path.Count - 1]].groundGroup)
+            if (navNodeInfos[startNode].groundGroup == navNodeInfos[path[path.Length - 1]].groundGroup)
             {
-                int startNodeToLast = GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[path[path.Count - 1]].gridPos);
-                int startNodeToStartPos = GetDistance(navNodeInfos[path[path.Count - 1]].gridPos, pathfindingVolume.worldToGridPos(start));
+                int startNodeToLast = GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[path[path.Length - 1]].gridPos);
+                int startNodeToStartPos = GetDistance(navNodeInfos[path[path.Length - 1]].gridPos, startPos);
                 //Debug.Log("startNodeToLast: " + startNodeToLast + " startNodeToStartPos: " + startNodeToStartPos);
                 if (startNodeToLast < startNodeToStartPos)
                 {
@@ -283,32 +292,20 @@ public class Graph_A_Star : MonoBehaviour
             path.Add(startNode);
         }
 
-        if (path.Count > 1 && startNode != endNode)
+        if (path.Length > 1 && startNode != endNode)
         {
             if (navNodeInfos[endNode].groundGroup == navNodeInfos[path[1]].groundGroup)
             {
                 int endNodeToBeforeLast = GetDistance(navNodeInfos[endNode].gridPos, navNodeInfos[path[1]].gridPos);
-                int endNodeToendPos = GetDistance(navNodeInfos[path[1]].gridPos, pathfindingVolume.worldToGridPos(end));
+                int endNodeToendPos = GetDistance(navNodeInfos[path[1]].gridPos, endPos);
 
                 if (endNodeToBeforeLast > endNodeToendPos)
                 {
                     path.RemoveAt(0);
                 }
             }
-            
+
         }
-
-        Debug.Log("Closest node: " + closestNode);
-        
-
-
-        sw.Stop();
-        Debug.Log("Pathfinding:" + sw.ElapsedMilliseconds + " ms");
-        Debug.Log("Length: " + path.Count);
-
-        path.Reverse();
-
-        return path;
     }
 
     private void AddHeapItem(int gridIndex)
@@ -345,14 +342,14 @@ public class Graph_A_Star : MonoBehaviour
 
                 if (childIndexRight < currentLength)
                 {
-                    if (pathfindingVolume.navNodeInfos[openHeap[childIndexRight]].fCost < pathfindingVolume.navNodeInfos[openHeap[childIndexLeft]].fCost)
+                    if (navNodeInfos[openHeap[childIndexRight]].fCost < navNodeInfos[openHeap[childIndexLeft]].fCost)
                     {
                         swapIndex = childIndexRight;
                     }
                 }
 
 
-                if (pathfindingVolume.navNodeInfos[openHeap[swapIndex]].fCost < pathfindingVolume.navNodeInfos[openHeap[heapIndex]].fCost)
+                if (navNodeInfos[openHeap[swapIndex]].fCost < navNodeInfos[openHeap[heapIndex]].fCost)
                 {
                     int temp = openHeap[swapIndex];
                     openHeap[swapIndex] = openHeap[heapIndex];
@@ -383,7 +380,7 @@ public class Graph_A_Star : MonoBehaviour
         while (true)
         {
 
-            if (pathfindingVolume.navNodeInfos[openHeap[parentIndex]].fCost > pathfindingVolume.navNodeInfos[openHeap[heapIndex]].fCost)
+            if (navNodeInfos[openHeap[parentIndex]].fCost > navNodeInfos[openHeap[heapIndex]].fCost)
             {
                 int temp = openHeap[parentIndex];
                 openHeap[parentIndex] = openHeap[heapIndex];
@@ -404,6 +401,10 @@ public class Graph_A_Star : MonoBehaviour
         }
     }
 
+    public int GridposToArrayPos(int2 gridPos)
+    {
+        return gridPos.y * gridSize.x + gridPos.x;
+    }
 
     private int GetDistance(int2 A, int2 B)
     {
