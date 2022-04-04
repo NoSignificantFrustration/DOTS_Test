@@ -423,6 +423,7 @@ public class PathfindingVolume : MonoBehaviour
             Gizmos.color = Color.red;
             for (int i = 1; i < path.Count; i++)
             {
+                Gizmos.DrawSphere(new Vector3(positionArray[path[i - 1]].x, positionArray[path[i - 1]].y, -2f), 0.4f);
                 Gizmos.DrawLine(new Vector3(positionArray[path[i - 1]].x, positionArray[path[i - 1]].y, -2f), new Vector3(positionArray[path[i]].x, positionArray[path[i]].y, -2f));
             }
         }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -14,6 +15,7 @@ public struct GridPathfindingJob : IJob
     [ReadOnly]
     public int2 gridSize;
     [ReadOnly]
+    [NativeDisableContainerSafetyRestriction]
     public NativeBitArray gridTraversableArray;
     [ReadOnly]
     public int2 startPos;
@@ -110,17 +112,26 @@ public struct GridPathfindingJob : IJob
             neighbours.Dispose();
         }
 
+
+
         if (current != endCell)
         {
             current = lovestHIndex;
         }
 
 
-
+        int prevCell = current;
+        int2 prevDir = new int2(2, 2);
 
         while (current != startCell)
         {
-            path.Add(current);
+            int2 direction = workingGrid[prevCell].gridPos - workingGrid[current].gridPos;
+            if (!prevDir.Equals(direction))
+            {
+                path.Add(current);
+                prevDir = direction;
+            }
+            prevCell = current;
             current = workingGrid[current].parentIndex;
         }
         path.Add(startCell);
@@ -250,8 +261,8 @@ public struct GridPathfindingJob : IJob
 
     private int GetDistance(int2 A, int2 B)
     {
-        int distX = Mathf.Abs(A.x - B.x);
-        int distY = Mathf.Abs(A.y - B.y);
+        int distX = math.abs(A.x - B.x);
+        int distY = math.abs(A.y - B.y);
 
         if (distX > distY)
         {

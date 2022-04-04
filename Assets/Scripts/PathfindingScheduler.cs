@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -12,11 +10,14 @@ public class PathfindingScheduler : MonoBehaviour
 
     public PathfindingVolume pathfindingVolume { get; private set; }
     public NativeArray<GridCell> grid { get; private set; }
+  
     public NativeBitArray gridTraversableArray { get; private set; }
 
     public NativeArray<NavNodeInfo> navNodeInfos { get; private set; }
     public NativeBitArray navNodeTraversableArray { get; private set; }
 
+
+    
 
 
     void Start()
@@ -130,6 +131,7 @@ public class PathfindingScheduler : MonoBehaviour
         job.path = new NativeList<int>(Allocator.TempJob);
 
         JobHandle handle = job.Schedule();
+
         handle.Complete();
 
         job.workingNavNodeInfos.Dispose();

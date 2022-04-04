@@ -1,5 +1,6 @@
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -11,6 +12,7 @@ public struct GraphPathfindingJob : IJob
     [ReadOnly]
     public NativeArray<NavNodeInfo> navNodeInfos;
     [ReadOnly]
+    [NativeDisableContainerSafetyRestriction]
     public NativeBitArray navNodeTraversableArray;
     [ReadOnly]
     public NativeMultiHashMap<int, int> groundGroupMap;
