@@ -11,11 +11,9 @@ public struct GraphPathfindingJob : IJob
     [ReadOnly]
     public NativeArray<NavNodeInfo> navNodeInfos;
     [ReadOnly]
-    public int2 gridSize;
-    [ReadOnly]
     public NativeBitArray navNodeTraversableArray;
     [ReadOnly]
-    NativeMultiHashMap<int, int> groundGroupMap;
+    public NativeMultiHashMap<int, int> groundGroupMap;
     [ReadOnly]
     public NativeMultiHashMap<int, GraphConnectionInfo> graphConnectionInfos;
     [ReadOnly]
@@ -39,11 +37,12 @@ public struct GraphPathfindingJob : IJob
     public void Execute()
     {
 
-        
 
-        //sw.Stop();
-        //Debug.Log("Determine start and end ground groups: " + sw.ElapsedMilliseconds + "ms");
-        //sw.Restart();
+        for (int i = 0; i < navNodeInfos.Length; i++)
+        {
+            workingNavNodeInfos[i] = navNodeInfos[i];
+        }
+
 
         int startNode = 0;
         int endNode = 0;
@@ -51,7 +50,7 @@ public struct GraphPathfindingJob : IJob
 
         using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(startGroup))
         {
-            //Debug.Log("Start:" + +nodes.Current);
+
             if (!nodes.MoveNext())
             {
                 return;
@@ -60,14 +59,14 @@ public struct GraphPathfindingJob : IJob
 
             int currentNode = nodes.Current;
             startNode = currentNode;
-            float minDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
+            float minDist = GetDistance(startPos, workingNavNodeInfos[currentNode].gridPos);
 
             if (navNodeTraversableArray.IsSet(currentNode))
             {
                 found = true;
             }
-            //Debug.Log(navNodeInfos[currentNode].id);
-            //Debug.Log("Curr: " + currentNode + " Dist: " + minDist);
+
+
             while (nodes.MoveNext())
             {
                 currentNode = nodes.Current;
@@ -79,9 +78,8 @@ public struct GraphPathfindingJob : IJob
 
 
 
-                float currentDist = Mathf.Abs((start.x - navNodeInfos[currentNode].worldPos.x) + (start.y - navNodeInfos[currentNode].worldPos.y));
-                //Debug.Log(navNodeInfos[currentNode].gridPos);
-                //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
+                float currentDist = GetDistance(startPos, workingNavNodeInfos[currentNode].gridPos);
+
                 if (minDist > currentDist || !found)
                 {
                     minDist = currentDist;
@@ -99,13 +97,10 @@ public struct GraphPathfindingJob : IJob
 
         }
 
-        //sw.Stop();
-        //Debug.Log("Determine start node: " + sw.ElapsedMilliseconds + "ms");
-        //sw.Restart();
 
         using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(endGroup))
         {
-            //Debug.Log("Start:" + +nodes.Current);
+
             if (!nodes.MoveNext())
             {
                 return;
@@ -115,26 +110,23 @@ public struct GraphPathfindingJob : IJob
 
             int currentNode = nodes.Current;
             endNode = currentNode;
-            float minValidDist = Mathf.Abs((end.x - navNodeInfos[currentNode].worldPos.x) + (end.y - navNodeInfos[currentNode].worldPos.y));
+            float minValidDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
 
             closestNode = nodes.Current;
             float minDist = minValidDist;
 
-            //Debug.Log("First: " + endNode + " " + pathfindingVolume.navNodeTraversableArray[currentNode]);
 
             if (navNodeTraversableArray.IsSet(currentNode))
             {
                 found = true;
             }
 
-            //Debug.Log(navNodeInfos[currentNode].id);
-            //Debug.Log("Curr: " + currentNode + " Dist: " + minDist);
             while (nodes.MoveNext())
             {
 
                 currentNode = nodes.Current;
 
-                float currentDist = Mathf.Abs((end.x - navNodeInfos[currentNode].worldPos.x) + (end.y - navNodeInfos[currentNode].worldPos.y));
+                float currentDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
 
                 if (minDist > currentDist)
                 {
@@ -148,11 +140,6 @@ public struct GraphPathfindingJob : IJob
                     continue;
                 }
 
-                //Debug.Log("Current: " + currentNode + " Found: " + found);
-
-
-                //Debug.Log(navNodeInfos[currentNode].gridPos);
-                //Debug.Log("Curr: " + currentNode + " Dist: " + currentDist);
                 if (minValidDist > currentDist || !found)
                 {
                     minValidDist = currentDist;
@@ -169,11 +156,6 @@ public struct GraphPathfindingJob : IJob
                 endNode = closestNode;
             }
         }
-
-        //sw.Stop();
-        //Debug.Log("Determine end node: " + sw.ElapsedMilliseconds + "ms");
-        //sw.Restart();
-
 
 
         currentLength = 0;
@@ -193,6 +175,8 @@ public struct GraphPathfindingJob : IJob
         while (currentLength > 0)
         {
 
+            
+
             int currentNode = RemoveFirst();
 
 
@@ -203,7 +187,6 @@ public struct GraphPathfindingJob : IJob
             if (currentNode.Equals(endNode))
             {
                 current = currentNode;
-                //Debug.Log("Success");
                 break;
             }
 
@@ -220,12 +203,12 @@ public struct GraphPathfindingJob : IJob
 
                     bool contains = openHashset.Contains(connections.Current.targetID);
 
-                    int newMovementCostToNeighbour = navNodeInfos[currentNode].gCost + GetDistance(navNodeInfos[currentNode].gridPos, navNodeInfos[connections.Current.targetID].gridPos);
-                    if (newMovementCostToNeighbour < navNodeInfos[connections.Current.targetID].gCost || !contains)
+                    int newMovementCostToNeighbour = workingNavNodeInfos[currentNode].gCost + GetDistance(workingNavNodeInfos[currentNode].gridPos, workingNavNodeInfos[connections.Current.targetID].gridPos);
+                    if (newMovementCostToNeighbour < workingNavNodeInfos[connections.Current.targetID].gCost || !contains)
                     {
                         NavNodeInfo info = workingNavNodeInfos[connections.Current.targetID];
                         info.gCost = newMovementCostToNeighbour;
-                        info.hCost = GetDistance(navNodeInfos[connections.Current.targetID].gridPos, navNodeInfos[closestNode].gridPos);
+                        info.hCost = GetDistance(workingNavNodeInfos[connections.Current.targetID].gridPos, workingNavNodeInfos[closestNode].gridPos);
                         info.parentIndex = currentNode;
                         workingNavNodeInfos[connections.Current.targetID] = info;
 
@@ -233,12 +216,12 @@ public struct GraphPathfindingJob : IJob
                         {
                             AddHeapItem(connections.Current.targetID);
                             openHashset.Add(connections.Current.targetID);
-                            if (navNodeInfos[connections.Current.targetID].hCost < lovestH)
+                            if (workingNavNodeInfos[connections.Current.targetID].hCost < lovestH)
                             {
-                                lovestH = navNodeInfos[connections.Current.targetID].hCost;
+                                lovestH = workingNavNodeInfos[connections.Current.targetID].hCost;
                                 lovestHIndex = connections.Current.targetID;
                             }
-                            //Debug.Log(currentNode);
+
                         }
                     }
                 }
@@ -248,35 +231,33 @@ public struct GraphPathfindingJob : IJob
         }
 
 
-        //Debug.Log("Start: " + startNode + " End: " + endNode);
+
 
 
         if (current != endNode)
         {
-            if (navNodeInfos[lovestHIndex].hCost >= GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[endNode].gridPos))
+            if (workingNavNodeInfos[lovestHIndex].hCost >= GetDistance(workingNavNodeInfos[startNode].gridPos, workingNavNodeInfos[endNode].gridPos))
             {
                 lovestHIndex = startNode;
             }
             current = lovestHIndex;
-            //Debug.Log("Fail");
+
         }
 
 
         while (current != startNode)
         {
             path.Add(current);
-            //Debug.Log("Current: " + current );
-            current = navNodeInfos[current].parentIndex;
+            current = workingNavNodeInfos[current].parentIndex;
         }
 
 
         if (path.Length > 0)
         {
-            if (navNodeInfos[startNode].groundGroup == navNodeInfos[path[path.Length - 1]].groundGroup)
+            if (workingNavNodeInfos[startNode].groundGroup == workingNavNodeInfos[path[path.Length - 1]].groundGroup)
             {
-                int startNodeToLast = GetDistance(navNodeInfos[startNode].gridPos, navNodeInfos[path[path.Length - 1]].gridPos);
-                int startNodeToStartPos = GetDistance(navNodeInfos[path[path.Length - 1]].gridPos, startPos);
-                //Debug.Log("startNodeToLast: " + startNodeToLast + " startNodeToStartPos: " + startNodeToStartPos);
+                int startNodeToLast = GetDistance(workingNavNodeInfos[startNode].gridPos, workingNavNodeInfos[path[path.Length - 1]].gridPos);
+                int startNodeToStartPos = GetDistance(workingNavNodeInfos[path[path.Length - 1]].gridPos, startPos);
                 if (startNodeToLast < startNodeToStartPos)
                 {
                     path.Add(startNode);
@@ -294,10 +275,10 @@ public struct GraphPathfindingJob : IJob
 
         if (path.Length > 1 && startNode != endNode)
         {
-            if (navNodeInfos[endNode].groundGroup == navNodeInfos[path[1]].groundGroup)
+            if (workingNavNodeInfos[endNode].groundGroup == workingNavNodeInfos[path[1]].groundGroup)
             {
-                int endNodeToBeforeLast = GetDistance(navNodeInfos[endNode].gridPos, navNodeInfos[path[1]].gridPos);
-                int endNodeToendPos = GetDistance(navNodeInfos[path[1]].gridPos, endPos);
+                int endNodeToBeforeLast = GetDistance(workingNavNodeInfos[endNode].gridPos, workingNavNodeInfos[path[1]].gridPos);
+                int endNodeToendPos = GetDistance(workingNavNodeInfos[path[1]].gridPos, endPos);
 
                 if (endNodeToBeforeLast > endNodeToendPos)
                 {
@@ -342,14 +323,14 @@ public struct GraphPathfindingJob : IJob
 
                 if (childIndexRight < currentLength)
                 {
-                    if (navNodeInfos[openHeap[childIndexRight]].fCost < navNodeInfos[openHeap[childIndexLeft]].fCost)
+                    if (workingNavNodeInfos[openHeap[childIndexRight]].fCost < workingNavNodeInfos[openHeap[childIndexLeft]].fCost)
                     {
                         swapIndex = childIndexRight;
                     }
                 }
 
 
-                if (navNodeInfos[openHeap[swapIndex]].fCost < navNodeInfos[openHeap[heapIndex]].fCost)
+                if (workingNavNodeInfos[openHeap[swapIndex]].fCost < workingNavNodeInfos[openHeap[heapIndex]].fCost)
                 {
                     int temp = openHeap[swapIndex];
                     openHeap[swapIndex] = openHeap[heapIndex];
@@ -380,7 +361,7 @@ public struct GraphPathfindingJob : IJob
         while (true)
         {
 
-            if (navNodeInfos[openHeap[parentIndex]].fCost > navNodeInfos[openHeap[heapIndex]].fCost)
+            if (workingNavNodeInfos[openHeap[parentIndex]].fCost > workingNavNodeInfos[openHeap[heapIndex]].fCost)
             {
                 int temp = openHeap[parentIndex];
                 openHeap[parentIndex] = openHeap[heapIndex];
@@ -401,10 +382,6 @@ public struct GraphPathfindingJob : IJob
         }
     }
 
-    public int GridposToArrayPos(int2 gridPos)
-    {
-        return gridPos.y * gridSize.x + gridPos.x;
-    }
 
     private int GetDistance(int2 A, int2 B)
     {

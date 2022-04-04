@@ -13,7 +13,11 @@ public class PathfindingScheduler : MonoBehaviour
     public PathfindingVolume pathfindingVolume { get; private set; }
     public NativeArray<GridCell> grid { get; private set; }
     public NativeBitArray gridTraversableArray { get; private set; }
-    
+
+    public NativeArray<NavNodeInfo> navNodeInfos { get; private set; }
+    public NativeBitArray navNodeTraversableArray { get; private set; }
+
+
 
     void Start()
     {
@@ -36,6 +40,23 @@ public class PathfindingScheduler : MonoBehaviour
             {
                 gridTraversableArray.Set(i, pathfindingVolume.gridTraversableArray[i]);
             }
+
+            if (navNodeInfos.IsCreated)
+            {
+                navNodeInfos.Dispose();
+            }
+            navNodeInfos = new NativeArray<NavNodeInfo>(pathfindingVolume.navNodeInfos, Allocator.Persistent);
+
+            if (navNodeTraversableArray.IsCreated)
+            {
+                navNodeTraversableArray.Dispose();
+            }
+            navNodeTraversableArray = new NativeBitArray(navNodeInfos.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            for (int i = 0; i < navNodeTraversableArray.Length; i++)
+            {
+                navNodeTraversableArray.Set(i, pathfindingVolume.navNodeTraversableArray[i]);
+            }
+
             pathfindingVolume.refreshGridTraversableArrayEvent.AddListener(RefreshGridTraversableArray);
         }
         else
@@ -67,8 +88,6 @@ public class PathfindingScheduler : MonoBehaviour
         JobHandle handle = job.Schedule();
         handle.Complete();
 
-
-
         job.workingGrid.Dispose();
         job.openHeap.Dispose();
         job.openHashset.Dispose();
@@ -76,6 +95,48 @@ public class PathfindingScheduler : MonoBehaviour
         job.heapIndexes.Dispose();
 
 
+
+        List<int> path = new List<int>();
+        for (int i = job.path.Length - 1; i > -1; i--)
+        {
+            path.Add(job.path[i]);
+        }
+        job.path.Dispose();
+
+
+        return path;
+    }
+
+    public List<int> GetGraphPath(int2 startPos, int2 endPos)
+    {
+        GraphPathfindingJob job = new GraphPathfindingJob();
+
+        job.navNodeInfos = navNodeInfos;
+        job.navNodeTraversableArray = navNodeTraversableArray;
+        job.groundGroupMap = pathfindingVolume.groundGroupMap;
+        job.graphConnectionInfos = pathfindingVolume.graphConnectionInfos;
+
+        job.startPos = startPos;
+        job.endPos = endPos;
+        job.startGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(startPos)].gridGroup;
+        job.endGroup = pathfindingVolume.grid[pathfindingVolume.GridposToArrayPos(endPos)].gridGroup;
+
+        job.workingNavNodeInfos = new NativeArray<NavNodeInfo>(navNodeInfos.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        job.openHeap = new NativeArray<int>(navNodeInfos.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        job.openHashset = new NativeHashSet<int>(navNodeInfos.Length, Allocator.TempJob);
+        job.closedSet = new NativeHashSet<int>(navNodeInfos.Length, Allocator.TempJob);
+        job.heapIndexes = new NativeArray<int>(navNodeInfos.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        job.path = new NativeList<int>(Allocator.TempJob);
+
+        JobHandle handle = job.Schedule();
+        handle.Complete();
+
+        job.workingNavNodeInfos.Dispose();
+        job.openHeap.Dispose();
+        job.openHashset.Dispose();
+        job.closedSet.Dispose();
+        job.heapIndexes.Dispose();
 
         List<int> path = new List<int>();
         for (int i = job.path.Length - 1; i > -1; i--)
@@ -111,6 +172,14 @@ public class PathfindingScheduler : MonoBehaviour
         if (gridTraversableArray.IsCreated)
         {
             gridTraversableArray.Dispose();
+        }
+        if (navNodeInfos.IsCreated)
+        {
+            navNodeInfos.Dispose();
+        }
+        if (navNodeTraversableArray.IsCreated)
+        {
+            navNodeTraversableArray.Dispose();
         }
         pathfindingVolume.refreshGridTraversableArrayEvent.RemoveListener(RefreshGridTraversableArray);
     }

@@ -105,7 +105,13 @@ public class PathfindingVolume : MonoBehaviour
 
     public void CalculateGraphPath()
     {
-        graphPath = graphPathfinder.FindGraphPath(origin.position, target.position);
+        System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+
+        graphPath = scheduler.GetGraphPath(worldToGridPos(origin.position), worldToGridPos(target.position));
+
+        sw.Stop();
+        Debug.Log(sw.ElapsedMilliseconds + "ms Length: " + graphPath.Count);
     }
 
     public void CreateGrid()
