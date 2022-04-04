@@ -128,13 +128,17 @@ public struct GridPathfindingJob : IJob
             int2 direction = workingGrid[prevCell].gridPos - workingGrid[current].gridPos;
             if (!prevDir.Equals(direction))
             {
-                path.Add(current);
+                path.Add(prevCell);
                 prevDir = direction;
             }
             prevCell = current;
             current = workingGrid[current].parentIndex;
         }
-        path.Add(startCell);
+
+        
+         path.Add(startCell);
+        
+        
     }
 
     private void AddHeapItem(int gridIndex)

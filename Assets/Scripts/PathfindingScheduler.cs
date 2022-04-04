@@ -133,7 +133,7 @@ public class PathfindingScheduler : MonoBehaviour
         JobHandle handle = job.Schedule();
 
         handle.Complete();
-
+        
         job.workingNavNodeInfos.Dispose();
         job.openHeap.Dispose();
         job.openHashset.Dispose();
@@ -193,4 +193,18 @@ public class PathfindingScheduler : MonoBehaviour
 public class RefreshRangeEvent : UnityEvent<Vector2Int, Vector2Int>
 {
 
+}
+
+public class PathfindingRequest
+{
+    public int2 startPos;
+    public int2 endPos;
+    public PathfindingType type;
+    
+    
+}
+
+public enum PathfindingType
+{
+    Grid, Graph
 }
