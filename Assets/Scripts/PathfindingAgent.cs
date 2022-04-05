@@ -6,46 +6,56 @@ using UnityEngine;
 
 public abstract class PathfindingAgent : MonoBehaviour
 {
-    [field: SerializeField, Min(0)] public float pathfindingCooldown { get; protected set;}
-    [field: SerializeField, Min(0.1f)] public float pathPositionReachedTreshold { get; protected set; }
+    [field: SerializeField, Min(0.5f)] public float defaultPathfindingCooldown { get; protected set;}
+    [field: SerializeField, Min(0.2f)] public float pathPositionReachedTreshold { get; protected set; }
 
-    protected EntityManager entityManager;
+    public EntityManager entityManager;
     protected Action<List<int>, bool> pathReceivedAction;
-    protected List<int> pathPositions;
+    protected List<int> pathIndexes;
     protected int currentIndex;
     protected Vector2 nextGoal;
     protected Vector2 endGoal;
     protected bool waitingForPath = false;
     protected bool arrivedOnDestination = true;
+    protected float pathfindingCooldown;
 
     public Vector2 direction { get; protected set; }
 
     protected virtual void Awake()
     {
+        pathfindingCooldown = defaultPathfindingCooldown;
         pathReceivedAction += OnPathReceived;
     }
 
     // Start is called before the first frame update
     protected virtual void Start()
     {
-        RequestPath();
+        
     }
 
     // Update is called once per frame
-    protected virtual void Update() { }
+    protected virtual void Update() 
+    {
+        pathfindingCooldown -= Time.deltaTime;
+
+    }
 
     protected virtual void OnPathReceived(List<int> path, bool success) 
     {
-        pathPositions = path;
+        pathIndexes = path;
         currentIndex = 0;
         waitingForPath = false;
         arrivedOnDestination = false;
+        nextGoal = GetNextPathPosition();
+        
+        
+        Debug.Log("Path received " + pathIndexes.Count);
     }
 
     protected virtual void EvaluateDirection()
     {
 
-        if (arrivedOnDestination)
+        if (arrivedOnDestination || pathIndexes == null)
         {
             direction = Vector2.zero;
             return;
@@ -55,7 +65,7 @@ public abstract class PathfindingAgent : MonoBehaviour
         {
             if (endGoal.Equals(nextGoal))
             {
-                currentIndex = -1;
+                //currentIndex = -1;
                 direction = Vector2.zero;
                 arrivedOnDestination = true;
                 return;
@@ -63,13 +73,14 @@ public abstract class PathfindingAgent : MonoBehaviour
 
             currentIndex++;
 
-            if (currentIndex == pathPositions.Count)
+            if (currentIndex >= pathIndexes.Count)
             {
                 nextGoal = endGoal;
             }
             else
             {
-                nextGoal = entityManager.pathfindingVolume.positionArray[pathPositions[currentIndex]];
+                OnPathPointReached();
+                nextGoal = GetNextPathPosition();
             }
 
             direction = ((Vector2)transform.position - nextGoal).normalized;
@@ -77,31 +88,12 @@ public abstract class PathfindingAgent : MonoBehaviour
      
     }
 
-    protected virtual void OnDrawGizmosSelected()
-    {
-        if (pathPositions != null)
-        {
-            
-            for (int i = currentIndex; i < pathPositions.Count; i++)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawSphere(entityManager.pathfindingVolume.positionArray[pathPositions[i]], 0.3f);
-            }
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(endGoal, 0.3f);
-        }
-    }
-
-    protected virtual void RequestPath()
-    {
-        if (waitingForPath)
-        {
-            Debug.LogWarning(gameObject.name + " wanted to request a path when it already requested one");
-            return;
-        }
 
 
+    protected abstract void RequestPath();
 
-    }
+    protected abstract void OnPathPointReached();
+
+    protected abstract Vector2 GetNextPathPosition();
     
 }

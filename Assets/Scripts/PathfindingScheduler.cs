@@ -22,13 +22,17 @@ public class PathfindingScheduler : MonoBehaviour
     private List<PathfindingRequest<GraphPathfindingJob>> graphPathfindingRequests;
 
 
-
+    private void Awake()
+    {
+        gridPathfindingRequests = new List<PathfindingRequest<GridPathfindingJob>>();
+        graphPathfindingRequests = new List<PathfindingRequest<GraphPathfindingJob>>();
+        pathfindingVolume = GetComponent<PathfindingVolume>();
+    }
 
     void Start()
     {
-        if (TryGetComponent<PathfindingVolume>(out PathfindingVolume pv))
+        if (pathfindingVolume != null)
         {
-            pathfindingVolume = pv;
             if (grid.IsCreated)
             {
                 grid.Dispose();
@@ -69,16 +73,15 @@ public class PathfindingScheduler : MonoBehaviour
             Debug.LogWarning(gameObject.name + " lacks a PathfindingVolume");
         }
 
-        gridPathfindingRequests = new List<PathfindingRequest<GridPathfindingJob>>();
-        graphPathfindingRequests = new List<PathfindingRequest<GraphPathfindingJob>>();
+        
 
     }
 
     private void Update()
     {
-
-        foreach (PathfindingRequest<GridPathfindingJob> item in gridPathfindingRequests)
+        for (int i = 0; i < gridPathfindingRequests.Count; i++)
         {
+            PathfindingRequest<GridPathfindingJob> item = gridPathfindingRequests[i];
             if (item.jobinfo.handle.IsCompleted)
             {
                 item.jobinfo.handle.Complete();
@@ -92,9 +95,9 @@ public class PathfindingScheduler : MonoBehaviour
 
 
                 List<int> path = new List<int>();
-                for (int i = item.jobinfo.job.path.Length - 1; i > -1; i--)
+                for (int j = item.jobinfo.job.path.Length - 1; j > 1;  j--)
                 {
-                    path.Add(item.jobinfo.job.path[i]);
+                    path.Add(item.jobinfo.job.path[j]);
                 }
                 item.jobinfo.job.path.Dispose();
 
@@ -102,30 +105,36 @@ public class PathfindingScheduler : MonoBehaviour
                 item.callback.Invoke(path, true);
 
                 gridPathfindingRequests.Remove(item);
+                i--;
             }
         }
+        foreach (PathfindingRequest<GridPathfindingJob> item in gridPathfindingRequests)
+        {
+            
+        }
+
+        //Debug.Log(gridPathfindingRequests.Count);
     }
 
     public void RequestPath(PathfindingRequest<GridPathfindingJob> request)
     {
-        
-        GridPathfindingJob job = new GridPathfindingJob();
-
-        job.grid = grid;
-        job.gridSize = new int2(pathfindingVolume.gridSize.x, pathfindingVolume.gridSize.y);
-        job.gridTraversableArray = gridTraversableArray;
-        job.startPos = request.startPos;
-        job.endPos = request.endPos;
-        job.path = new NativeList<int>(Allocator.TempJob);
-
-        job.workingGrid = new NativeArray<GridCell>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        job.openHeap = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        job.openHashset = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
-        job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
-        job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
         JobInfo<GridPathfindingJob> jobInfo = new JobInfo<GridPathfindingJob>();
-        jobInfo.job = job;
+        jobInfo.job = new GridPathfindingJob();
+
+        jobInfo.job.grid = grid;
+        jobInfo.job.gridSize = new int2(pathfindingVolume.gridSize.x, pathfindingVolume.gridSize.y);
+        jobInfo.job.gridTraversableArray = gridTraversableArray;
+        jobInfo.job.startPos = request.startPos;
+        jobInfo.job.endPos = request.endPos;
+        jobInfo.job.path = new NativeList<int>(Allocator.TempJob);
+
+        jobInfo.job.workingGrid = new NativeArray<GridCell>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        jobInfo.job.openHeap = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        jobInfo.job.openHashset = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        jobInfo.job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        jobInfo.job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        
         jobInfo.handle = jobInfo.job.Schedule();
 
         request.jobinfo = jobInfo;
@@ -215,7 +224,7 @@ public class PathfindingScheduler : MonoBehaviour
         job.heapIndexes.Dispose();
 
         List<int> path = new List<int>();
-        for (int i = job.path.Length - 1; i > -1; i--)
+        for (int i = job.path.Length - 1; i > 1; i--)
         {
             path.Add(job.path[i]);
         }

@@ -135,10 +135,11 @@ public struct GridPathfindingJob : IJob
             current = workingGrid[current].parentIndex;
         }
 
-        
-         path.Add(startCell);
-        
-        
+        //path.RemoveAt(0);
+        //path.RemoveAt(0);
+        //path.Add(startCell);
+
+
     }
 
     private void AddHeapItem(int gridIndex)
