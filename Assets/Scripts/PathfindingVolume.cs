@@ -27,9 +27,9 @@ public class PathfindingVolume : MonoBehaviour
 
     private LayerMask groundMask;
 
-     public BitArray gridTraversableArray { get; private set; }
+    public BitArray gridTraversableArray { get; private set; }
     public BitArray walkableArray { get; private set; }
-    private float2[] positionArray;
+    public Vector2[] positionArray { get; private set; }
 
     [SerializeField] public GridCell[] grid { get; private set; }
     public Grid_A_Star gridPathfinder;
@@ -121,7 +121,7 @@ public class PathfindingVolume : MonoBehaviour
         int sizeY = Mathf.RoundToInt(areaSize.y / cellDiameter);
         gridSize = new Vector2Int(sizeX, sizeY);
         walkableArray = new BitArray(gridSize.x * gridSize.y);
-        positionArray = new float2[gridSize.x * gridSize.y];
+        positionArray = new Vector2[gridSize.x * gridSize.y];
         grid = new GridCell[gridSize.x * gridSize.y];
         gridTraversableArray = new BitArray(grid.Length);
         groundMask = LayerMask.GetMask("Ground");

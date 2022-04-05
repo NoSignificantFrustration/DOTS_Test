@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -17,7 +18,10 @@ public class PathfindingScheduler : MonoBehaviour
     public NativeBitArray navNodeTraversableArray { get; private set; }
 
 
-    
+    private List<PathfindingRequest<GridPathfindingJob>> gridPathfindingRequests;
+    private List<PathfindingRequest<GraphPathfindingJob>> graphPathfindingRequests;
+
+
 
 
     void Start()
@@ -64,7 +68,77 @@ public class PathfindingScheduler : MonoBehaviour
         {
             Debug.LogWarning(gameObject.name + " lacks a PathfindingVolume");
         }
+
+        gridPathfindingRequests = new List<PathfindingRequest<GridPathfindingJob>>();
+        graphPathfindingRequests = new List<PathfindingRequest<GraphPathfindingJob>>();
+
     }
+
+    private void Update()
+    {
+
+        foreach (PathfindingRequest<GridPathfindingJob> item in gridPathfindingRequests)
+        {
+            if (item.jobinfo.handle.IsCompleted)
+            {
+                item.jobinfo.handle.Complete();
+
+                item.jobinfo.job.workingGrid.Dispose();
+                item.jobinfo.job.openHeap.Dispose();
+                item.jobinfo.job.openHashset.Dispose();
+                item.jobinfo.job.closedSet.Dispose();
+                item.jobinfo.job.heapIndexes.Dispose();
+
+
+
+                List<int> path = new List<int>();
+                for (int i = item.jobinfo.job.path.Length - 1; i > -1; i--)
+                {
+                    path.Add(item.jobinfo.job.path[i]);
+                }
+                item.jobinfo.job.path.Dispose();
+
+
+                item.callback.Invoke(path, true);
+
+                gridPathfindingRequests.Remove(item);
+            }
+        }
+    }
+
+    public void RequestPath(PathfindingRequest<GridPathfindingJob> request)
+    {
+        
+        GridPathfindingJob job = new GridPathfindingJob();
+
+        job.grid = grid;
+        job.gridSize = new int2(pathfindingVolume.gridSize.x, pathfindingVolume.gridSize.y);
+        job.gridTraversableArray = gridTraversableArray;
+        job.startPos = request.startPos;
+        job.endPos = request.endPos;
+        job.path = new NativeList<int>(Allocator.TempJob);
+
+        job.workingGrid = new NativeArray<GridCell>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        job.openHeap = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        job.openHashset = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        JobInfo<GridPathfindingJob> jobInfo = new JobInfo<GridPathfindingJob>();
+        jobInfo.job = job;
+        jobInfo.handle = jobInfo.job.Schedule();
+
+        request.jobinfo = jobInfo;
+
+        gridPathfindingRequests.Add(request);
+    }
+
+
+    public void RequestPath(PathfindingRequest<GraphPathfindingJob> request)
+    {
+
+    }
+
 
     public List<int> GetGridPath(int2 startPos, int2 endPos)
     {
@@ -195,16 +269,17 @@ public class RefreshRangeEvent : UnityEvent<Vector2Int, Vector2Int>
 
 }
 
-public class PathfindingRequest
+public class PathfindingRequest<T>
 {
     public int2 startPos;
     public int2 endPos;
-    public PathfindingType type;
-    
+    public Action<List<int>, bool> callback;
+    public JobInfo<T> jobinfo;
     
 }
 
-public enum PathfindingType
+public class JobInfo<T>
 {
-    Grid, Graph
+    public JobHandle handle;
+    public T job;
 }

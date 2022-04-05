@@ -6,6 +6,10 @@ public class EntityManager : MonoBehaviour
 {
 
     [field: SerializeField] public PathfindingVolume pathfindingVolume { get; private set; }
+    [field: SerializeField] public List<PathfindingAgent> pathfindingAgents { get; private set; }
+    [field: SerializeField] public PathfindingScheduler pathfindingScheduler { get; private set; }
+
+
 
     // Start is called before the first frame update
     void Start()
