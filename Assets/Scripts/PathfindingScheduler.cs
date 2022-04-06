@@ -81,36 +81,14 @@ public class PathfindingScheduler : MonoBehaviour
     {
         for (int i = 0; i < gridPathfindingRequests.Count; i++)
         {
-            PathfindingRequest<GridPathfindingJob> item = gridPathfindingRequests[i];
-            if (item.jobinfo.handle.IsCompleted)
+            PathfindingRequest<GridPathfindingJob> request = gridPathfindingRequests[i];
+            if (request.jobinfo.handle.IsCompleted)
             {
-                item.jobinfo.handle.Complete();
+                CompleteRequest(request);
 
-                item.jobinfo.job.workingGrid.Dispose();
-                item.jobinfo.job.openHeap.Dispose();
-                item.jobinfo.job.openHashset.Dispose();
-                item.jobinfo.job.closedSet.Dispose();
-                item.jobinfo.job.heapIndexes.Dispose();
-
-
-
-                List<int> path = new List<int>();
-                for (int j = item.jobinfo.job.path.Length - 1; j > 1;  j--)
-                {
-                    path.Add(item.jobinfo.job.path[j]);
-                }
-                item.jobinfo.job.path.Dispose();
-
-
-                item.callback.Invoke(path, true);
-
-                gridPathfindingRequests.Remove(item);
+                gridPathfindingRequests.RemoveAt(i);
                 i--;
             }
-        }
-        foreach (PathfindingRequest<GridPathfindingJob> item in gridPathfindingRequests)
-        {
-            
         }
 
         //Debug.Log(gridPathfindingRequests.Count);
@@ -140,6 +118,29 @@ public class PathfindingScheduler : MonoBehaviour
         request.jobinfo = jobInfo;
 
         gridPathfindingRequests.Add(request);
+    }
+
+    private void CompleteRequest(PathfindingRequest<GridPathfindingJob> request)
+    {
+        request.jobinfo.handle.Complete();
+
+        request.jobinfo.job.workingGrid.Dispose();
+        request.jobinfo.job.openHeap.Dispose();
+        request.jobinfo.job.openHashset.Dispose();
+        request.jobinfo.job.closedSet.Dispose();
+        request.jobinfo.job.heapIndexes.Dispose();
+
+
+
+        List<int> path = new List<int>();
+        for (int j = request.jobinfo.job.path.Length - 1; j > 1; j--)
+        {
+            path.Add(request.jobinfo.job.path[j]);
+        }
+        request.jobinfo.job.path.Dispose();
+
+
+        request.callback?.Invoke(path, true);
     }
 
 
@@ -250,6 +251,12 @@ public class PathfindingScheduler : MonoBehaviour
 
     private void OnDisable()
     {
+        while (gridPathfindingRequests.Count > 0)
+        {
+            CompleteRequest(gridPathfindingRequests[gridPathfindingRequests.Count - 1]);
+            gridPathfindingRequests.RemoveAt(gridPathfindingRequests.Count - 1);
+        }
+
         if (grid.IsCreated)
         {
             grid.Dispose();

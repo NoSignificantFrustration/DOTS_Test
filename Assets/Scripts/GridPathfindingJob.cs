@@ -54,7 +54,7 @@ public struct GridPathfindingJob : IJob
         int lovestH = int.MaxValue;
         int lovestHIndex = 0;
 
-        int current = -1;
+        int current = startCell;
 
         while (currentLength > 0)
         {
@@ -106,13 +106,20 @@ public struct GridPathfindingJob : IJob
                             lovestHIndex = index;
                         }
                     }
+                    else
+                    {
+                        SortUp(heapIndexes[index]);
+                    }
                 }
 
             }
             neighbours.Dispose();
         }
 
-
+        if (current == startCell)
+        {
+            return;
+        }
 
         if (current != endCell)
         {

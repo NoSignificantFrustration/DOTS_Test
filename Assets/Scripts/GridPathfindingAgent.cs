@@ -62,27 +62,55 @@ public class GridPathfindingAgent : PathfindingAgent
         request.callback = pathReceivedAction;
 
         entityManager.pathfindingScheduler.RequestPath(request);
-        Debug.Log("Requested path");
+        //Debug.Log("Requested path");
     }
 
     protected virtual void OnDrawGizmosSelected()
     {
         if (pathIndexes != null)
         {
-
+            Gizmos.color = Color.red;
             for (int i = currentIndex; i < pathIndexes.Count; i++)
             {
-                Gizmos.color = Color.red;
+                
                 Gizmos.DrawSphere(entityManager.pathfindingVolume.positionArray[pathIndexes[i]], 0.3f);
                 //Debug.Log(pathIndexes[i] + " i: " + i);
             }
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(endGoal, 0.3f);
+
+            if (pathIndexes.Count > 0 && currentIndex < pathIndexes.Count )
+            {
+                Gizmos.DrawLine(entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]], (Vector2)transform.position);
+                if (pathIndexes.Count > 1)
+                {
+                    //Debug.Log(currentIndex);
+                    for (int i = currentIndex; i < pathIndexes.Count - 1; i++)
+                    {
+                        Gizmos.DrawLine(entityManager.pathfindingVolume.positionArray[pathIndexes[i + 1]], entityManager.pathfindingVolume.positionArray[pathIndexes[i]]);
+                    }
+                    
+                }
+                Gizmos.DrawLine(entityManager.pathfindingVolume.positionArray[pathIndexes[pathIndexes.Count - 1]], endGoal);
+            }
+            else if (!arrivedOnDestination)
+            {
+                Gizmos.DrawLine(transform.position, endGoal);
+            }
+
+            if (!arrivedOnDestination)
+            {
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawSphere(endGoal, 0.3f);
+            }
+            
         }
     }
 
     protected override Vector2 GetNextPathPosition()
     {
+        if (pathIndexes.Count == 0)
+        {
+            return endGoal;
+        }
         return entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]];
     }
 

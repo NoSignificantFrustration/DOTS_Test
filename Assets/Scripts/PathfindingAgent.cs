@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 public abstract class PathfindingAgent : MonoBehaviour
 {
-    [field: SerializeField, Min(0.5f)] public float defaultPathfindingCooldown { get; protected set;}
+    [field: SerializeField, Min(0.5f)] public float defaultPathfindingCooldown { get; protected set; }
     [field: SerializeField, Min(0.2f)] public float pathPositionReachedTreshold { get; protected set; }
 
     public EntityManager entityManager;
@@ -30,26 +28,31 @@ public abstract class PathfindingAgent : MonoBehaviour
     // Start is called before the first frame update
     protected virtual void Start()
     {
-        
+
     }
 
     // Update is called once per frame
-    protected virtual void Update() 
+    protected virtual void Update()
     {
         pathfindingCooldown -= Time.deltaTime;
 
     }
 
-    protected virtual void OnPathReceived(List<int> path, bool success) 
+    protected virtual void OnPathReceived(List<int> path, bool success)
     {
         pathIndexes = path;
         currentIndex = 0;
         waitingForPath = false;
-        arrivedOnDestination = false;
+
+        pathfindingCooldown = defaultPathfindingCooldown;
+
         nextGoal = GetNextPathPosition();
-        
-        
-        Debug.Log("Path received " + pathIndexes.Count);
+        arrivedOnDestination = false;
+
+
+
+
+        //Debug.Log("Path received " + pathIndexes.Count);
     }
 
     protected virtual void EvaluateDirection()
@@ -85,7 +88,7 @@ public abstract class PathfindingAgent : MonoBehaviour
 
             direction = ((Vector2)transform.position - nextGoal).normalized;
         }
-     
+
     }
 
 
@@ -95,5 +98,5 @@ public abstract class PathfindingAgent : MonoBehaviour
     protected abstract void OnPathPointReached();
 
     protected abstract Vector2 GetNextPathPosition();
-    
+
 }
