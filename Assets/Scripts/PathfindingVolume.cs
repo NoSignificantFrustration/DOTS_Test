@@ -209,10 +209,11 @@ public class PathfindingVolume : MonoBehaviour
         {
             topRightEnd.y = gridSize.y;
         }
+        Debug.Log(bottomLeftStart + " " + topRightEnd);
 
-        for (int y = bottomLeftStart.y; y < topRightEnd.x; y++)
+        for (int y = bottomLeftStart.y; y < topRightEnd.y; y++)
         {
-            for (int x = bottomLeftStart.x; x < topRightEnd.y; x++)
+            for (int x = bottomLeftStart.x; x < topRightEnd.x; x++)
             {
                 int arrayPos = y * gridSize.x + x;
                 Vector3 worldPoint = new Vector3(positionArray[arrayPos].x, positionArray[arrayPos].y, transform.position.z);

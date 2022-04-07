@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class PathfindingAgent : MonoBehaviour
 {
-    [field: SerializeField, Min(0.5f)] public float defaultPathfindingCooldown { get; protected set; }
+    [field: SerializeField, Min(0.2f)] public float defaultPathfindingCooldown { get; protected set; }
     [field: SerializeField, Min(0.2f)] public float pathPositionReachedTreshold { get; protected set; }
 
     public EntityManager entityManager;

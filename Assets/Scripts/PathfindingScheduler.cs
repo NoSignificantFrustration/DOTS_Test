@@ -225,7 +225,7 @@ public class PathfindingScheduler : MonoBehaviour
         job.heapIndexes.Dispose();
 
         List<int> path = new List<int>();
-        for (int i = job.path.Length - 1; i > 1; i--)
+        for (int i = job.path.Length - 1; i > -1; i--)
         {
             path.Add(job.path[i]);
         }
@@ -237,9 +237,9 @@ public class PathfindingScheduler : MonoBehaviour
 
     private void RefreshGridTraversableArray(Vector2Int bottomLeft, Vector2Int topRight)
     {
-        for (int y = bottomLeft.y; y < topRight.x; y++)
+        for (int y = bottomLeft.y; y < topRight.y; y++)
         {
-            for (int x = bottomLeft.x; x < topRight.y; x++)
+            for (int x = bottomLeft.x; x < topRight.x; x++)
             {
                 int arrayPos = y * pathfindingVolume.gridSize.x + x;
                 gridTraversableArray.Set(arrayPos, pathfindingVolume.gridTraversableArray[arrayPos]);
