@@ -38,10 +38,10 @@ public struct GridPathfindingJob : IJob
 
         currentLength = 0;
 
-        for (int i = 0; i < workingGrid.Length; i++)
-        {
-            workingGrid[i] = grid[i];
-        }
+        //for (int i = 0; i < workingGrid.Length; i++)
+        //{
+        //    workingGrid[i] = grid[i];
+        //}
 
 
         int startCell = GridposToArrayPos(startPos);
@@ -49,7 +49,7 @@ public struct GridPathfindingJob : IJob
 
         AddHeapItem(startCell);
         openHashset.Add(startCell);
-
+        workingGrid[startCell] = grid[startCell];
 
         int lovestH = int.MaxValue;
         int lovestHIndex = 0;
@@ -80,19 +80,30 @@ public struct GridPathfindingJob : IJob
 
                 if (!gridTraversableArray.IsSet(index) || closedSet.Contains(index))
                 {
-
                     continue;
                 }
 
-
                 bool contains = openHashset.Contains(index);
 
-                int newMovementCostToNeighbour = workingGrid[currentCell].gCost + GetDistance(workingGrid[currentCell].gridPos, workingGrid[index].gridPos);
+                int2 direction = grid[index].gridPos - grid[currentCell].gridPos;
+
+                if (math.abs(direction.x) + math.abs(direction.y) == 2)
+                {
+                    int2 currentPos = grid[currentCell].gridPos;
+                    if (!gridTraversableArray.IsSet(GridposToArrayPos(new int2(currentPos.x + direction.x, currentPos.y))) || !gridTraversableArray.IsSet(GridposToArrayPos(new int2(currentPos.x, currentPos.y + direction.y))))
+                    {
+
+                        continue;
+                    }
+                }
+
+
+                int newMovementCostToNeighbour = workingGrid[currentCell].gCost + GetDistance(workingGrid[currentCell].gridPos, grid[index].gridPos);
                 if (newMovementCostToNeighbour < workingGrid[index].gCost || !contains)
                 {
-                    GridCell cell = workingGrid[index];
+                    GridCell cell = grid[index];
                     cell.gCost = newMovementCostToNeighbour;
-                    cell.hCost = GetDistance(cell.gridPos, workingGrid[endCell].gridPos);
+                    cell.hCost = GetDistance(cell.gridPos, grid[endCell].gridPos);
                     cell.parentIndex = currentCell;
                     workingGrid[index] = cell;
 

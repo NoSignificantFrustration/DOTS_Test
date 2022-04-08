@@ -18,14 +18,20 @@ public class PathfindingScheduler : MonoBehaviour
     public NativeBitArray navNodeTraversableArray { get; private set; }
 
 
-    private List<PathfindingRequest<GridPathfindingJob>> gridPathfindingRequests;
-    private List<PathfindingRequest<GraphPathfindingJob>> graphPathfindingRequests;
+    private List<PathfindingRequest<GridPathfindingJob>> gridPathfindingJobs;
+    private List<PathfindingRequest<GraphPathfindingJob>> graphPathfindingJobs;
+
+    private Queue<PathfindingRequest<GridPathfindingJob>> gridPathfindingRequests;
+    private Queue<PathfindingRequest<GraphPathfindingJob>> graphPathfindingRequests;
 
 
     private void Awake()
     {
-        gridPathfindingRequests = new List<PathfindingRequest<GridPathfindingJob>>();
-        graphPathfindingRequests = new List<PathfindingRequest<GraphPathfindingJob>>();
+        gridPathfindingJobs = new List<PathfindingRequest<GridPathfindingJob>>();
+        graphPathfindingJobs = new List<PathfindingRequest<GraphPathfindingJob>>();
+        gridPathfindingRequests = new Queue<PathfindingRequest<GridPathfindingJob>>();
+        graphPathfindingRequests = new Queue<PathfindingRequest<GraphPathfindingJob>>();
+
         pathfindingVolume = GetComponent<PathfindingVolume>();
     }
 
@@ -79,14 +85,14 @@ public class PathfindingScheduler : MonoBehaviour
 
     private void Update()
     {
-        for (int i = 0; i < gridPathfindingRequests.Count; i++)
+        for (int i = 0; i < gridPathfindingJobs.Count; i++)
         {
-            PathfindingRequest<GridPathfindingJob> request = gridPathfindingRequests[i];
+            PathfindingRequest<GridPathfindingJob> request = gridPathfindingJobs[i];
             if (request.jobinfo.handle.IsCompleted)
             {
                 CompleteRequest(request);
 
-                gridPathfindingRequests.RemoveAt(i);
+                gridPathfindingJobs.RemoveAt(i);
                 i--;
             }
         }
@@ -94,7 +100,7 @@ public class PathfindingScheduler : MonoBehaviour
         //Debug.Log(gridPathfindingRequests.Count);
     }
 
-    public void RequestPath(PathfindingRequest<GridPathfindingJob> request)
+    private void SchedulePath(PathfindingRequest<GridPathfindingJob> request)
     {
         JobInfo<GridPathfindingJob> jobInfo = new JobInfo<GridPathfindingJob>();
         jobInfo.job = new GridPathfindingJob();
@@ -112,12 +118,22 @@ public class PathfindingScheduler : MonoBehaviour
         jobInfo.job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
         jobInfo.job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-        
+
         jobInfo.handle = jobInfo.job.Schedule();
 
         request.jobinfo = jobInfo;
 
-        gridPathfindingRequests.Add(request);
+        gridPathfindingJobs.Add(request);
+    }
+
+    private void SchedulePath(PathfindingRequest<GraphPathfindingJob> request)
+    {
+
+    }
+
+    public void RequestPath(PathfindingRequest<GridPathfindingJob> request)
+    {
+        gridPathfindingRequests.Enqueue(request);
     }
 
     private void CompleteRequest(PathfindingRequest<GridPathfindingJob> request)
@@ -248,13 +264,30 @@ public class PathfindingScheduler : MonoBehaviour
         //Debug.Log("Refresh: " + bottomLeft + " " + topRight);
     }
 
+    private void LateUpdate()
+    {
+        int amount;
+        if (gridPathfindingRequests.Count < 10)
+        {
+            amount = gridPathfindingRequests.Count;
+        }
+        else
+        {
+            amount = 10;
+        }
+
+        for (int i = 0; i < amount; i++)
+        {
+            SchedulePath(gridPathfindingRequests.Dequeue());
+        }
+    }
 
     private void OnDisable()
     {
-        while (gridPathfindingRequests.Count > 0)
+        while (gridPathfindingJobs.Count > 0)
         {
-            CompleteRequest(gridPathfindingRequests[gridPathfindingRequests.Count - 1]);
-            gridPathfindingRequests.RemoveAt(gridPathfindingRequests.Count - 1);
+            CompleteRequest(gridPathfindingJobs[gridPathfindingJobs.Count - 1]);
+            gridPathfindingJobs.RemoveAt(gridPathfindingJobs.Count - 1);
         }
 
         if (grid.IsCreated)

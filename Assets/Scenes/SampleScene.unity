@@ -4654,7 +4654,7 @@ MonoBehaviour:
     oneDirectional: 0
   pathfindingVolume: {fileID: 1990685782}
   id: 0
-  groundGroup: 9
+  groundGroup: 6
   blocked: 0
 --- !u!4 &995497089
 Transform:
