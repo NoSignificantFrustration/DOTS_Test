@@ -54,7 +54,7 @@ public class GridPathfindingAgent : PathfindingAgent
         
         endGoal = entityManager.pathfindingVolume.target.position;
         waitingForPath = true;
-        arrivedOnDestination = false;
+        arrivedOnDestination = true;
 
         PathfindingRequest<GridPathfindingJob> request = new PathfindingRequest<GridPathfindingJob>();
         request.startPos = entityManager.pathfindingVolume.worldToGridPos(transform.position);

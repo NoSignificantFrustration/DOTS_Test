@@ -15,6 +15,7 @@ public abstract class PathfindingAgent : MonoBehaviour
     protected Vector2 endGoal;
     protected bool waitingForPath = false;
     protected bool arrivedOnDestination = true;
+    protected bool hasPath = false;
     protected float pathfindingCooldown;
 
     public Vector2 direction { get; protected set; }
@@ -45,14 +46,22 @@ public abstract class PathfindingAgent : MonoBehaviour
         waitingForPath = false;
 
         pathfindingCooldown = defaultPathfindingCooldown;
-
+        
         nextGoal = GetNextPathPosition();
-        arrivedOnDestination = false;
+        if (path.Count == 0 && !success)
+        {
+            arrivedOnDestination = true;
+        }
+        else
+        {
+            arrivedOnDestination = false;
+        }
+        
+        hasPath = success;
 
 
 
-
-        //Debug.Log("Path received " + pathIndexes.Count);
+        Debug.Log("Path received " + pathIndexes.Count);
     }
 
     protected virtual void EvaluateDirection()
@@ -71,6 +80,7 @@ public abstract class PathfindingAgent : MonoBehaviour
                 //currentIndex = -1;
                 direction = Vector2.zero;
                 arrivedOnDestination = true;
+                hasPath = false;
                 return;
             }
 

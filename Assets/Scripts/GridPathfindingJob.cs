@@ -25,11 +25,12 @@ public struct GridPathfindingJob : IJob
     public NativeArray<GridCell> workingGrid;
     public NativeArray<int> openHeap;
     public int currentLength;
-    public NativeHashSet<int> openHashset;
-    public NativeHashSet<int> closedSet;
+    public NativeBitArray openSet;
+    public NativeBitArray closedSet;
     public NativeArray<int> heapIndexes;
 
     public NativeList<int> path;
+    public int success;
 
     public void Execute()
     {
@@ -44,15 +45,20 @@ public struct GridPathfindingJob : IJob
         //}
 
 
+        openSet.SetBits(0, false, workingGrid.Length);
+        closedSet.SetBits(0, false, workingGrid.Length);
+
+
+
         int startCell = GridposToArrayPos(startPos);
         int endCell = GridposToArrayPos(endPos);
 
         AddHeapItem(startCell);
-        openHashset.Add(startCell);
+        openSet.Set(startCell, true);
         workingGrid[startCell] = grid[startCell];
 
         int lovestH = int.MaxValue;
-        int lovestHIndex = 0;
+        int lovestHIndex = startCell;
 
         int current = startCell;
 
@@ -63,8 +69,8 @@ public struct GridPathfindingJob : IJob
 
 
 
-            openHashset.Remove(currentCell);
-            closedSet.Add(currentCell);
+            openSet.Set(currentCell, false);
+            closedSet.Set(currentCell, true);
 
             if (currentCell.Equals(endCell))
             {
@@ -78,12 +84,12 @@ public struct GridPathfindingJob : IJob
             {
                 int index = neighbours[i];
 
-                if (!gridTraversableArray.IsSet(index) || closedSet.Contains(index))
+                if (!gridTraversableArray.IsSet(index) || closedSet.IsSet(index))
                 {
                     continue;
                 }
 
-                bool contains = openHashset.Contains(index);
+                bool contains = openSet.IsSet(index);
 
                 int2 direction = grid[index].gridPos - grid[currentCell].gridPos;
 
@@ -110,7 +116,7 @@ public struct GridPathfindingJob : IJob
                     if (!contains)
                     {
                         AddHeapItem(index);
-                        openHashset.Add(index);
+                        openSet.Set(index, true);
                         if (workingGrid[index].hCost < lovestH)
                         {
                             lovestH = workingGrid[index].hCost;
@@ -127,15 +133,22 @@ public struct GridPathfindingJob : IJob
             neighbours.Dispose();
         }
 
+        if (current != endCell)
+        {
+            current = lovestHIndex;
+            success = 0;
+        }
+        else
+        {
+            success = 1;
+        }
+
         if (current == startCell)
         {
             return;
         }
 
-        if (current != endCell)
-        {
-            current = lovestHIndex;
-        }
+        
 
 
         int prevCell = current;
@@ -143,6 +156,7 @@ public struct GridPathfindingJob : IJob
 
         while (current != startCell)
         {
+            
             int2 direction = workingGrid[prevCell].gridPos - workingGrid[current].gridPos;
             if (!prevDir.Equals(direction))
             {
@@ -151,6 +165,7 @@ public struct GridPathfindingJob : IJob
             }
             prevCell = current;
             current = workingGrid[current].parentIndex;
+            //Debug.Log(current);
         }
 
         //path.RemoveAt(0);

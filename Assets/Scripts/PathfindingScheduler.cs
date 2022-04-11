@@ -22,6 +22,9 @@ public class PathfindingScheduler : MonoBehaviour
     private List<PathfindingRequest<GraphPathfindingJob>> graphPathfindingJobs;
 
     private Queue<PathfindingRequest<GridPathfindingJob>> gridPathfindingRequests;
+    public int maxGridPathfindingJobsPerFrame = 10;
+    private int currentMaxGridPathfindingJobsPerFrame;
+
     private Queue<PathfindingRequest<GraphPathfindingJob>> graphPathfindingRequests;
 
 
@@ -33,6 +36,8 @@ public class PathfindingScheduler : MonoBehaviour
         graphPathfindingRequests = new Queue<PathfindingRequest<GraphPathfindingJob>>();
 
         pathfindingVolume = GetComponent<PathfindingVolume>();
+
+        currentMaxGridPathfindingJobsPerFrame = maxGridPathfindingJobsPerFrame;
     }
 
     void Start()
@@ -85,6 +90,8 @@ public class PathfindingScheduler : MonoBehaviour
 
     private void Update()
     {
+        currentMaxGridPathfindingJobsPerFrame = maxGridPathfindingJobsPerFrame;
+
         for (int i = 0; i < gridPathfindingJobs.Count; i++)
         {
             PathfindingRequest<GridPathfindingJob> request = gridPathfindingJobs[i];
@@ -114,8 +121,8 @@ public class PathfindingScheduler : MonoBehaviour
 
         jobInfo.job.workingGrid = new NativeArray<GridCell>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         jobInfo.job.openHeap = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        jobInfo.job.openHashset = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
-        jobInfo.job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        jobInfo.job.openSet = new NativeBitArray(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+        jobInfo.job.closedSet = new NativeBitArray(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         jobInfo.job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
 
@@ -133,7 +140,16 @@ public class PathfindingScheduler : MonoBehaviour
 
     public void RequestPath(PathfindingRequest<GridPathfindingJob> request)
     {
-        gridPathfindingRequests.Enqueue(request);
+        if (currentMaxGridPathfindingJobsPerFrame > 0)
+        {
+            SchedulePath(request);
+            currentMaxGridPathfindingJobsPerFrame--;
+        }
+        else
+        {
+            gridPathfindingRequests.Enqueue(request);
+        }
+        
     }
 
     private void CompleteRequest(PathfindingRequest<GridPathfindingJob> request)
@@ -142,7 +158,7 @@ public class PathfindingScheduler : MonoBehaviour
 
         request.jobinfo.job.workingGrid.Dispose();
         request.jobinfo.job.openHeap.Dispose();
-        request.jobinfo.job.openHashset.Dispose();
+        request.jobinfo.job.openSet.Dispose();
         request.jobinfo.job.closedSet.Dispose();
         request.jobinfo.job.heapIndexes.Dispose();
 
@@ -156,7 +172,7 @@ public class PathfindingScheduler : MonoBehaviour
         request.jobinfo.job.path.Dispose();
 
 
-        request.callback?.Invoke(path, true);
+        request.callback?.Invoke(path, request.jobinfo.job.success == 1);
     }
 
 
@@ -180,8 +196,8 @@ public class PathfindingScheduler : MonoBehaviour
 
         job.workingGrid = new NativeArray<GridCell>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         job.openHeap = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-        job.openHashset =  new NativeHashSet<int>(grid.Length, Allocator.TempJob);
-        job.closedSet = new NativeHashSet<int>(grid.Length, Allocator.TempJob);
+        job.openSet =  new NativeBitArray(grid.Length, Allocator.TempJob);
+        job.closedSet = new NativeBitArray(grid.Length, Allocator.TempJob);
         job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
 
@@ -191,7 +207,7 @@ public class PathfindingScheduler : MonoBehaviour
 
         job.workingGrid.Dispose();
         job.openHeap.Dispose();
-        job.openHashset.Dispose();
+        job.openSet.Dispose();
         job.closedSet.Dispose();
         job.heapIndexes.Dispose();
 
@@ -266,20 +282,12 @@ public class PathfindingScheduler : MonoBehaviour
 
     private void LateUpdate()
     {
-        int amount;
-        if (gridPathfindingRequests.Count < 10)
-        {
-            amount = gridPathfindingRequests.Count;
-        }
-        else
-        {
-            amount = 10;
-        }
-
-        for (int i = 0; i < amount; i++)
+        while (currentMaxGridPathfindingJobsPerFrame > 0 && gridPathfindingRequests.Count > 0)
         {
             SchedulePath(gridPathfindingRequests.Dequeue());
+            currentMaxGridPathfindingJobsPerFrame--;
         }
+
     }
 
     private void OnDisable()

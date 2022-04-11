@@ -9772,7 +9772,7 @@ MonoBehaviour:
   bottomLeft: {x: 0, y: 0}
   topRight: {x: 88, y: 81}
   showGrid: 0
-  showGraph: 1
+  showGraph: 0
   gridPathfinder: {fileID: 0}
   path: 
   graphPathfinder: {fileID: 0}
