@@ -5,18 +5,6 @@ using UnityEngine;
 public class GridPathfindingAgent : PathfindingAgent
 {
 
-    protected override void Awake()
-    {
-        base.Awake();
-    }
-
-    // Start is called before the first frame update
-    override protected void Start()
-    {
-        base.Start();
-        
-        
-    }
 
     // Update is called once per frame
     override protected void Update()
@@ -105,17 +93,9 @@ public class GridPathfindingAgent : PathfindingAgent
         }
     }
 
-    protected override Vector2 GetNextPathPosition()
-    {
-        if (pathIndexes.Count == 0)
-        {
-            return endGoal;
-        }
-        return entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]];
-    }
 
     protected override void OnPathPointReached()
     {
-        Debug.Log("Path point reached");
+        //Debug.Log("Path point reached");
     }
 }

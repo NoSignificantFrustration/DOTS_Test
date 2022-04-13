@@ -107,6 +107,13 @@ public abstract class PathfindingAgent : MonoBehaviour
 
     protected abstract void OnPathPointReached();
 
-    protected abstract Vector2 GetNextPathPosition();
+    protected virtual Vector2 GetNextPathPosition()
+    {
+        if (pathIndexes.Count == 0)
+        {
+            return endGoal;
+        }
+        return entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]];
+    }
 
 }

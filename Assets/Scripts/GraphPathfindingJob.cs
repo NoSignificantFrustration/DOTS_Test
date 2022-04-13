@@ -36,6 +36,8 @@ public struct GraphPathfindingJob : IJob
     public NativeArray<int> heapIndexes;
 
     public NativeList<int> path;
+    public int success;
+
     public void Execute()
     {
 
@@ -55,6 +57,7 @@ public struct GraphPathfindingJob : IJob
 
             if (!nodes.MoveNext())
             {
+                success = 0;
                 return;
             }
             bool found = false;
@@ -94,6 +97,7 @@ public struct GraphPathfindingJob : IJob
 
             if (!found)
             {
+                success = 0;
                 return;
             }
 
@@ -105,6 +109,7 @@ public struct GraphPathfindingJob : IJob
 
             if (!nodes.MoveNext())
             {
+                success = 0;
                 return;
             }
 
@@ -168,7 +173,7 @@ public struct GraphPathfindingJob : IJob
 
 
         int lovestH = int.MaxValue;
-        int lovestHIndex = 0;
+        int lovestHIndex = startNode;
 
         int current = -1;
 
@@ -189,6 +194,7 @@ public struct GraphPathfindingJob : IJob
             if (currentNode.Equals(endNode))
             {
                 current = currentNode;
+                success = 1;
                 break;
             }
 
@@ -243,7 +249,7 @@ public struct GraphPathfindingJob : IJob
                 lovestHIndex = startNode;
             }
             current = lovestHIndex;
-
+            success = 0;
         }
 
 
