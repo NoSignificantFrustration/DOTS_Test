@@ -36,7 +36,7 @@ public struct GraphPathfindingJob : IJob
     public NativeArray<int> heapIndexes;
 
     public NativeList<int> path;
-    public int success;
+    public NativeArray<int> success;
 
     public void Execute()
     {
@@ -49,7 +49,7 @@ public struct GraphPathfindingJob : IJob
 
 
         int startNode = 0;
-        int endNode = 0;
+        int endNode = -2;
         int closestNode = 0;
 
         using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(startGroup))
@@ -57,7 +57,7 @@ public struct GraphPathfindingJob : IJob
 
             if (!nodes.MoveNext())
             {
-                success = 0;
+                success[0] = 0;
                 return;
             }
             bool found = false;
@@ -97,72 +97,78 @@ public struct GraphPathfindingJob : IJob
 
             if (!found)
             {
-                success = 0;
+                success[0] = 0;
                 return;
             }
 
         }
 
-
-        using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(endGroup))
+        if (endGroup > 0)
         {
-
-            if (!nodes.MoveNext())
-            {
-                success = 0;
-                return;
-            }
-
-            bool found = false;
-
-            int currentNode = nodes.Current;
-            endNode = currentNode;
-            float minValidDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
-
-            closestNode = nodes.Current;
-            float minDist = minValidDist;
-
-
-            if (navNodeTraversableArray.IsSet(currentNode))
-            {
-                found = true;
-            }
-
-            while (nodes.MoveNext())
+            using (NativeMultiHashMap<int, int>.Enumerator nodes = groundGroupMap.GetValuesForKey(endGroup))
             {
 
-                currentNode = nodes.Current;
-
-                float currentDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
-
-                if (minDist > currentDist)
+                if (!nodes.MoveNext())
                 {
-                    minDist = currentDist;
-                    closestNode = currentNode;
+                    success[0] = 0;
+                    return;
                 }
 
+                bool found = false;
 
-                if (!navNodeTraversableArray.IsSet(currentNode))
-                {
-                    continue;
-                }
+                int currentNode = nodes.Current;
+                endNode = currentNode;
+                float minValidDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
 
-                if (minValidDist > currentDist || !found)
+                closestNode = nodes.Current;
+                float minDist = minValidDist;
+
+
+                if (navNodeTraversableArray.IsSet(currentNode))
                 {
-                    minValidDist = currentDist;
-                    endNode = currentNode;
                     found = true;
+                }
 
-                    minDist = currentDist;
-                    closestNode = currentNode;
+                while (nodes.MoveNext())
+                {
+
+                    currentNode = nodes.Current;
+
+                    float currentDist = GetDistance(endPos, workingNavNodeInfos[currentNode].gridPos);
+
+                    if (minDist > currentDist)
+                    {
+                        minDist = currentDist;
+                        closestNode = currentNode;
+                    }
+
+
+                    if (!navNodeTraversableArray.IsSet(currentNode))
+                    {
+                        continue;
+                    }
+
+                    if (minValidDist > currentDist || !found)
+                    {
+                        minValidDist = currentDist;
+                        endNode = currentNode;
+                        found = true;
+
+                        minDist = currentDist;
+                        closestNode = currentNode;
+                    }
+                }
+
+                if (!found)
+                {
+                    endNode = closestNode;
                 }
             }
-
-            if (!found)
-            {
-                endNode = closestNode;
-            }
+            //endPos = navNodeInfos[endNode].gridPos;
         }
+
+
+        
 
 
         currentLength = 0;
@@ -172,8 +178,8 @@ public struct GraphPathfindingJob : IJob
         openHashset.Add(startNode);
 
 
-        int lovestH = int.MaxValue;
-        int lovestHIndex = startNode;
+        int lowestWeighedF = GetDistance(navNodeInfos[startNode].gridPos, endPos) * 10;
+        int lowestWeighedFIndex = startNode;
 
         int current = -1;
 
@@ -194,7 +200,7 @@ public struct GraphPathfindingJob : IJob
             if (currentNode.Equals(endNode))
             {
                 current = currentNode;
-                success = 1;
+                success[0] = 1;
                 break;
             }
 
@@ -216,19 +222,29 @@ public struct GraphPathfindingJob : IJob
                     {
                         NavNodeInfo info = workingNavNodeInfos[connections.Current.targetID];
                         info.gCost = newMovementCostToNeighbour;
-                        info.hCost = GetDistance(workingNavNodeInfos[connections.Current.targetID].gridPos, workingNavNodeInfos[closestNode].gridPos);
+                        info.hCost = GetDistance(workingNavNodeInfos[connections.Current.targetID].gridPos, endPos);
                         info.parentIndex = currentNode;
                         workingNavNodeInfos[connections.Current.targetID] = info;
+
+
+                        int currentCost = workingNavNodeInfos[connections.Current.targetID].gCost + workingNavNodeInfos[connections.Current.targetID].hCost * 10;
+
+                        if (currentCost < lowestWeighedF)
+                        {
+                            lowestWeighedF = currentCost;
+                            lowestWeighedFIndex = connections.Current.targetID;
+
+                            //Debug.Log(lowestF);
+                            //Debug.Log(lowestFIndex);
+                        }
+
+                        //Debug.Log(workingNavNodeInfos[connections.Current.targetID].fCost);
+                        //Debug.Log(connections.Current.targetID);
 
                         if (!contains)
                         {
                             AddHeapItem(connections.Current.targetID);
                             openHashset.Add(connections.Current.targetID);
-                            if (workingNavNodeInfos[connections.Current.targetID].hCost < lovestH)
-                            {
-                                lovestH = workingNavNodeInfos[connections.Current.targetID].hCost;
-                                lovestHIndex = connections.Current.targetID;
-                            }
 
                         }
                     }
@@ -244,15 +260,16 @@ public struct GraphPathfindingJob : IJob
 
         if (current != endNode)
         {
-            if (workingNavNodeInfos[lovestHIndex].hCost >= GetDistance(workingNavNodeInfos[startNode].gridPos, workingNavNodeInfos[endNode].gridPos))
-            {
-                lovestHIndex = startNode;
-            }
-            current = lovestHIndex;
-            success = 0;
+            //if (lowestF >= GetDistance(workingNavNodeInfos[startNode].gridPos, endPos))
+            //{
+            //    lovestFIndex = startNode;
+            //}
+            current = lowestWeighedFIndex;
+            endNode = current;
+            success[0] = 0;
         }
-
-
+        //Debug.Log(lowestF);
+        //Debug.Log(current);
         while (current != startNode)
         {
             path.Add(current);
@@ -280,8 +297,7 @@ public struct GraphPathfindingJob : IJob
         {
             path.Add(startNode);
         }
-
-        if (path.Length > 1 && startNode != endNode)
+        if (path.Length > 1 && startNode != endNode && success[0] == 1)
         {
             if (workingNavNodeInfos[endNode].groundGroup == workingNavNodeInfos[path[1]].groundGroup)
             {

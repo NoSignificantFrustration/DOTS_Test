@@ -39,6 +39,7 @@ public class PathfindingScheduler : MonoBehaviour
         pathfindingVolume = GetComponent<PathfindingVolume>();
 
         currentMaxGridPathfindingJobsPerFrame = maxGridPathfindingJobsPerFrame;
+        currentMaxGraphPathfindingJobsPerFrame = maxGraphPathfindingJobsPerFrame;
     }
 
     void Start()
@@ -104,7 +105,7 @@ public class PathfindingScheduler : MonoBehaviour
                 i--;
             }
         }
-
+        currentMaxGraphPathfindingJobsPerFrame = maxGraphPathfindingJobsPerFrame;
         for (int i = 0; i < graphPathfindingJobs.Count; i++)
         {
             PathfindingRequest<GraphPathfindingJob> request = graphPathfindingJobs[i];
@@ -138,6 +139,7 @@ public class PathfindingScheduler : MonoBehaviour
         jobInfo.job.closedSet = new NativeBitArray(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
         jobInfo.job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
+        jobInfo.job.success = new NativeArray<int>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         jobInfo.handle = jobInfo.job.Schedule();
 
@@ -166,6 +168,8 @@ public class PathfindingScheduler : MonoBehaviour
         jobInfo.job.openHashset = new NativeHashSet<int>(navNodeInfos.Length, Allocator.TempJob);
         jobInfo.job.closedSet = new NativeHashSet<int>(navNodeInfos.Length, Allocator.TempJob);
         jobInfo.job.heapIndexes = new NativeArray<int>(navNodeInfos.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
+        jobInfo.job.success = new NativeArray<int>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         jobInfo.job.path = new NativeList<int>(Allocator.TempJob);
 
@@ -210,7 +214,9 @@ public class PathfindingScheduler : MonoBehaviour
         request.jobinfo.job.path.Dispose();
 
 
-        request.callback?.Invoke(path, request.jobinfo.job.success == 1);
+        request.callback?.Invoke(path, request.jobinfo.job.success[0] == 1);
+        request.jobinfo.job.success.Dispose();
+        //Debug.Log(request.jobinfo.job.success);
     }
 
 
@@ -239,14 +245,15 @@ public class PathfindingScheduler : MonoBehaviour
 
         List<int> path = new List<int>();
 
-        for (int j = request.jobinfo.job.path.Length - 1; j > 1; j--)
+        for (int j = request.jobinfo.job.path.Length - 1; j > -1; j--)
         {
             path.Add(request.jobinfo.job.path[j]);
         }
 
         request.jobinfo.job.path.Dispose();
 
-        request.callback?.Invoke(path, request.jobinfo.job.success == 1);
+        request.callback?.Invoke(path, request.jobinfo.job.success[0] == 1);
+        request.jobinfo.job.success.Dispose();
     }
 
     public List<int> GetGridPath(int2 startPos, int2 endPos)
@@ -267,7 +274,7 @@ public class PathfindingScheduler : MonoBehaviour
         job.closedSet = new NativeBitArray(grid.Length, Allocator.TempJob);
         job.heapIndexes = new NativeArray<int>(grid.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
-
+        job.success = new NativeArray<int>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
         JobHandle handle = job.Schedule();
         handle.Complete();
@@ -277,7 +284,7 @@ public class PathfindingScheduler : MonoBehaviour
         job.openSet.Dispose();
         job.closedSet.Dispose();
         job.heapIndexes.Dispose();
-
+        
 
 
         List<int> path = new List<int>();
@@ -286,7 +293,7 @@ public class PathfindingScheduler : MonoBehaviour
             path.Add(job.path[i]);
         }
         job.path.Dispose();
-
+        job.success.Dispose();
 
         return path;
     }
@@ -313,6 +320,8 @@ public class PathfindingScheduler : MonoBehaviour
 
         job.path = new NativeList<int>(Allocator.TempJob);
 
+        job.success = new NativeArray<int>(1, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+
         JobHandle handle = job.Schedule();
 
         handle.Complete();
@@ -329,7 +338,7 @@ public class PathfindingScheduler : MonoBehaviour
             path.Add(job.path[i]);
         }
         job.path.Dispose();
-
+        job.success.Dispose();
 
         return path;
     }
@@ -355,6 +364,11 @@ public class PathfindingScheduler : MonoBehaviour
             currentMaxGridPathfindingJobsPerFrame--;
         }
 
+        while (currentMaxGraphPathfindingJobsPerFrame > 0 && graphPathfindingRequests.Count > 0)
+        {
+            SchedulePath(graphPathfindingRequests.Dequeue());
+            currentMaxGraphPathfindingJobsPerFrame--;
+        }
     }
 
     private void OnDisable()
@@ -363,6 +377,11 @@ public class PathfindingScheduler : MonoBehaviour
         {
             CompleteRequest(gridPathfindingJobs[gridPathfindingJobs.Count - 1]);
             gridPathfindingJobs.RemoveAt(gridPathfindingJobs.Count - 1);
+        }
+        while (graphPathfindingJobs.Count > 0)
+        {
+            CompleteRequest(graphPathfindingJobs[graphPathfindingJobs.Count - 1]);
+            graphPathfindingJobs.RemoveAt(graphPathfindingJobs.Count - 1);
         }
 
         if (grid.IsCreated)
@@ -380,6 +399,14 @@ public class PathfindingScheduler : MonoBehaviour
         if (navNodeTraversableArray.IsCreated)
         {
             navNodeTraversableArray.Dispose();
+        }
+        if (pathfindingVolume.graphConnectionInfos.IsCreated)
+        {
+            pathfindingVolume.graphConnectionInfos.Dispose();
+        }
+        if (pathfindingVolume.groundGroupMap.IsCreated)
+        {
+            pathfindingVolume.groundGroupMap.Dispose();
         }
         pathfindingVolume.refreshGridTraversableArrayEvent.RemoveListener(RefreshGridTraversableArray);
     }

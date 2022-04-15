@@ -47,13 +47,22 @@ public abstract class PathfindingAgent : MonoBehaviour
 
         pathfindingCooldown = defaultPathfindingCooldown;
         
-        nextGoal = GetNextPathPosition();
+        
         if (path.Count == 0 && !success)
         {
             arrivedOnDestination = true;
         }
         else
         {
+            if (path.Count == 0)
+            {
+                nextGoal = endGoal;
+            }
+            else
+            {
+                nextGoal = GetNextPathPosition();
+            }
+            
             arrivedOnDestination = false;
         }
         
@@ -61,10 +70,10 @@ public abstract class PathfindingAgent : MonoBehaviour
 
 
 
-        Debug.Log("Path received " + pathIndexes.Count);
+        //Debug.Log("Path received " + pathIndexes.Count + " Success: " + hasPath);
     }
 
-    protected virtual void EvaluateDirection()
+    public virtual void EvaluateDirection()
     {
 
         if (arrivedOnDestination || pathIndexes == null)
@@ -88,7 +97,18 @@ public abstract class PathfindingAgent : MonoBehaviour
 
             if (currentIndex >= pathIndexes.Count)
             {
-                nextGoal = endGoal;
+                if (hasPath)
+                {
+                    nextGoal = endGoal;
+                }
+                else
+                {
+                    direction = Vector2.zero;
+                    arrivedOnDestination = true;
+                    hasPath = false;
+                    return;
+                }
+                
             }
             else
             {
@@ -103,17 +123,9 @@ public abstract class PathfindingAgent : MonoBehaviour
 
 
 
-    protected abstract void RequestPath();
+    public abstract bool RequestPath(Vector2 goal);
 
     protected abstract void OnPathPointReached();
 
-    protected virtual Vector2 GetNextPathPosition()
-    {
-        if (pathIndexes.Count == 0)
-        {
-            return endGoal;
-        }
-        return entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]];
-    }
-
+    protected abstract Vector2 GetNextPathPosition();
 }

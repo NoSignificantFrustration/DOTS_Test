@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(PathfindingScheduler))]
 public class PathfindingVolume : MonoBehaviour
 {
     [SerializeField] public Transform origin, target;
@@ -30,6 +31,7 @@ public class PathfindingVolume : MonoBehaviour
     public BitArray gridTraversableArray { get; private set; }
     public BitArray walkableArray { get; private set; }
     public Vector2[] positionArray { get; private set; }
+    public Vector2[] navNodePositionArray { get; private set; }
 
     [SerializeField] public GridCell[] grid { get; private set; }
     public Grid_A_Star gridPathfinder;
@@ -518,6 +520,7 @@ public class PathfindingVolume : MonoBehaviour
         List<GraphConnectionInfo> connectionInfoList = new List<GraphConnectionInfo>();
 
         navNodeTraversableArray = new BitArray(pathNodes.Count);
+        navNodePositionArray = new Vector2[pathNodes.Count];
 
         for (int i = 0; i < pathNodes.Count; i++)
         {
@@ -526,6 +529,7 @@ public class PathfindingVolume : MonoBehaviour
             nodeInfo.id = i;
             nodeInfo.gridPos = worldToGridPos(pathNodes[i].transform.position);
             navNodeTraversableArray[i] = !pathNodes[i].blocked;
+            navNodePositionArray[i] = pathNodes[i].transform.position;
 
             nodeInfo.worldPos = new float2(pathNodes[i].transform.position.x, pathNodes[i].transform.position.y);
 
@@ -562,14 +566,7 @@ public class PathfindingVolume : MonoBehaviour
 
     private void OnDisable()
     {
-        if (graphConnectionInfos.IsCreated)
-        {
-            graphConnectionInfos.Dispose();
-        }
-        if (groundGroupMap.IsCreated)
-        {
-            groundGroupMap.Dispose();
-        }
+        
     }
 
     public struct GizmoConnectionInfo

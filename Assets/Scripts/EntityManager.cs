@@ -26,6 +26,9 @@ public class EntityManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        for (int i = 0; i < pathfindingAgents.Count; i++)
+        {
+            pathfindingAgents[i].RequestPath(pathfindingVolume.target.position);
+        }
     }
 }

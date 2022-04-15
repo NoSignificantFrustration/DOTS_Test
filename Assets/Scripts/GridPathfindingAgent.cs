@@ -6,41 +6,22 @@ public class GridPathfindingAgent : PathfindingAgent
 {
 
 
-    // Update is called once per frame
-    override protected void Update()
-    {
-        base.Update();
-        //Debug.Log(pathfindingCooldown);
-        if (!waitingForPath)
-        {
-            RequestPath();
-        }
-        
-        
-        EvaluateDirection();
-        //if (pathIndexes != null)
-        //{
-        //    //Debug.Log(Vector2.Distance((Vector2)transform.position, nextGoal));
-        //    Debug.Log(nextGoal);
-        //}
 
-    }
-
-    protected override void RequestPath()
+    public override bool RequestPath(Vector2 goal)
     {
 
         if (pathfindingCooldown > 0 || waitingForPath)
         {
-            return;
+            return false;
         }
         pathfindingCooldown = defaultPathfindingCooldown;
+        endGoal = goal;
         if (Vector2.Distance(transform.position, endGoal) <= pathPositionReachedTreshold)
         {
             pathfindingCooldown = defaultPathfindingCooldown;
-            return;
+            return true;
         }
         
-        endGoal = entityManager.pathfindingVolume.target.position;
         waitingForPath = true;
         arrivedOnDestination = true;
 
@@ -50,6 +31,7 @@ public class GridPathfindingAgent : PathfindingAgent
         request.callback = pathReceivedAction;
 
         entityManager.pathfindingScheduler.RequestPath(request);
+        return true;
         //Debug.Log("Requested path");
     }
 
@@ -77,7 +59,11 @@ public class GridPathfindingAgent : PathfindingAgent
                     }
                     
                 }
-                Gizmos.DrawLine(entityManager.pathfindingVolume.positionArray[pathIndexes[pathIndexes.Count - 1]], endGoal);
+                if (hasPath)
+                {
+                    Gizmos.DrawLine(entityManager.pathfindingVolume.positionArray[pathIndexes[pathIndexes.Count - 1]], endGoal);
+                }
+                
             }
             else if (!arrivedOnDestination)
             {
@@ -97,5 +83,12 @@ public class GridPathfindingAgent : PathfindingAgent
     protected override void OnPathPointReached()
     {
         //Debug.Log("Path point reached");
+    }
+
+    protected override Vector2 GetNextPathPosition()
+    {
+        //Debug.Log(pathIndexes.Count);
+        //Debug.Log(pathIndexes[currentIndex]);
+        return entityManager.pathfindingVolume.positionArray[pathIndexes[currentIndex]];
     }
 }

@@ -30,7 +30,7 @@ public struct GridPathfindingJob : IJob
     public NativeArray<int> heapIndexes;
 
     public NativeList<int> path;
-    public int success;
+    public NativeArray<int> success;
 
     public void Execute()
     {
@@ -72,7 +72,7 @@ public struct GridPathfindingJob : IJob
             openSet.Set(currentCell, false);
             closedSet.Set(currentCell, true);
 
-            if (currentCell.Equals(endCell))
+            if (currentCell == endCell)
             {
                 current = currentCell;
                 break;
@@ -136,13 +136,13 @@ public struct GridPathfindingJob : IJob
         if (current != endCell)
         {
             current = lovestHIndex;
-            success = 0;
+            success[0] = 0;
         }
         else
         {
-            success = 1;
+            success[0] = 1;
         }
-
+        //Debug.Log("Current: " + current + " end: " + endCell + " success: " + success);
         if (current == startCell)
         {
             return;
